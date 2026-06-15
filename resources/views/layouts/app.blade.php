@@ -223,6 +223,7 @@
 
         /* ── Mobile sidebar toggle ── */
         .sidebar-toggle { display: none; }
+        .print-only { display: none !important; }
 
         @media (max-width: 991.98px) {
             .sidebar { transform: translateX(-100%); }
@@ -237,6 +238,113 @@
                 z-index: 999;
             }
             .sidebar-overlay.show { display: block; }
+        }
+
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 12mm;
+            }
+
+            html,
+            body {
+                background: #fff !important;
+                color: #111827 !important;
+                font-size: 11px;
+            }
+
+            .sidebar,
+            .sidebar-overlay,
+            .topbar,
+            .no-print,
+            .btn,
+            form,
+            .card-footer,
+            .pagination,
+            .print-hidden {
+                display: none !important;
+            }
+
+            .print-only {
+                display: block !important;
+            }
+
+            .main-wrapper {
+                display: block !important;
+                margin-left: 0 !important;
+                min-height: auto !important;
+            }
+
+            .page-content {
+                padding: 0 !important;
+            }
+
+            .card {
+                border: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                break-inside: auto;
+            }
+
+            .card-header {
+                background: #fff !important;
+                border-bottom: 1px solid #111827 !important;
+                color: #111827 !important;
+                padding: 0 0 8px !important;
+                margin-bottom: 8px;
+            }
+
+            .card-body {
+                padding: 0 !important;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+            }
+
+            table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .table th,
+            .table td {
+                background: #fff !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #111827 !important;
+                padding: 4px 6px !important;
+            }
+
+            .badge {
+                background: #fff !important;
+                border: 1px solid #111827 !important;
+                color: #111827 !important;
+            }
+
+            .print-report-heading {
+                border-bottom: 2px solid #111827;
+                margin-bottom: 12px;
+                padding-bottom: 10px;
+            }
+
+            .print-report-heading h1 {
+                font-size: 18px;
+                margin: 0 0 4px;
+                text-transform: uppercase;
+            }
+
+            .print-report-heading p {
+                margin: 0;
+            }
         }
     </style>
 
@@ -321,8 +429,11 @@
             <a href="{{ route('murid.peminjaman.create') }}" class="nav-link {{ request()->routeIs('murid.peminjaman.create') ? 'active' : '' }}">
                 <i class="bi bi-plus-circle-fill"></i> Ajukan Peminjaman
             </a>
-            <a href="{{ route('murid.peminjaman.index') }}" class="nav-link {{ request()->routeIs('murid.peminjaman.*') ? 'active' : '' }}">
+            <a href="{{ route('murid.peminjaman.index') }}" class="nav-link {{ request()->routeIs('murid.peminjaman.index') || request()->routeIs('murid.peminjaman.show') ? 'active' : '' }}">
                 <i class="bi bi-clock-history"></i> Riwayat Peminjaman
+            </a>
+            <a href="{{ route('murid.pass-kunci.scan') }}" class="nav-link {{ request()->routeIs('murid.pass-kunci.scan') ? 'active' : '' }}">
+                <i class="bi bi-qr-code-scan"></i> Ambil Kunci
             </a>
         @endif
     </nav>
@@ -370,19 +481,19 @@
     <main class="page-content">
         {{-- Flash Messages --}}
         @if(session('success'))
-            <div class="alert alert-success d-flex align-items-center gap-2 mb-4" role="alert">
+            <div class="alert alert-success d-flex align-items-center gap-2 mb-4 no-print" role="alert">
                 <i class="bi bi-check-circle-fill"></i>
                 {{ session('success') }}
             </div>
         @endif
         @if(session('error'))
-            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4 no-print" role="alert">
                 <i class="bi bi-x-circle-fill"></i>
                 {{ session('error') }}
             </div>
         @endif
         @if(session('info'))
-            <div class="alert alert-info d-flex align-items-center gap-2 mb-4" role="alert">
+            <div class="alert alert-info d-flex align-items-center gap-2 mb-4 no-print" role="alert">
                 <i class="bi bi-info-circle-fill"></i>
                 {{ session('info') }}
             </div>

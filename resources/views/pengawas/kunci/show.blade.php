@@ -3,6 +3,7 @@
 @section('page-title', 'Detail Peminjaman')
 
 @section('content')
+@php $passKunciKeluar = $peminjaman->passKunciKeluar; @endphp
 <div class="row g-4">
     {{-- Kolom Kiri: Info Peminjaman --}}
     <div class="col-lg-5">
@@ -37,7 +38,7 @@
                     @endif
                     <tr>
                         <td class="text-muted small fw-semibold">Status</td>
-                        <td><span class="badge bg-{{ \App\Models\Peminjaman::statusBadge($peminjaman->status) }} fs-6">{{ \App\Models\Peminjaman::statusLabel($peminjaman->status) }}</span></td>
+                        <td><span class="badge bg-{{ $peminjaman->statusBadgeForDisplay() }} fs-6">{{ $peminjaman->statusLabelForDisplay() }}</span></td>
                     </tr>
                 </table>
             </div>
@@ -50,9 +51,64 @@
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
                     <tr><td class="text-muted small" style="width:45%">Diserahkan oleh</td><td class="fw-semibold">{{ $peminjaman->penyerahanKunci->pengawas->name }}</td></tr>
+                    @if($passKunciKeluar)
+                    <tr>
+                        <td class="text-muted small">Pengembalian</td>
+                        <td>
+                            <span class="badge bg-info text-dark">{{ $peminjaman->statusLabelForDisplay() }}</span>
+                            <div class="text-muted small mt-1">{{ $passKunciKeluar->used_at?->format('H:i, d/m/Y') ?? 'Selesai via pass kunci' }}</div>
+                        </td>
+                    </tr>
+                    @endif
                     <tr><td class="text-muted small">Waktu Serah</td><td>{{ $peminjaman->penyerahanKunci->waktu_serah?->format('H:i, d/m/Y') ?? '—' }}</td></tr>
+                    @unless($passKunciKeluar)
                     <tr><td class="text-muted small">Waktu Kembali</td><td>{{ $peminjaman->penyerahanKunci->waktu_terima_kembali?->format('H:i, d/m/Y') ?? '<span class="badge bg-warning text-dark">Belum dikembalikan</span>' }}</td></tr>
+                    @endunless
                 </table>
+            </div>
+        </div>
+        @endif
+
+        {{-- Transfer Log (Pass Kunci Langsung) --}}
+        @if(isset($transferLogs) && $transferLogs->count() > 0)
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left-right text-info"></i>
+                <span>Log Pass Kunci Langsung</span>
+                <span class="badge bg-info text-dark ms-auto">{{ $transferLogs->count() }}</span>
+            </div>
+            <div class="card-body py-2 px-3">
+                @foreach($transferLogs as $log)
+                <div class="d-flex gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                    {{-- Status dot --}}
+                    <div class="d-flex flex-column align-items-center" style="min-width:18px">
+                        <div class="rounded-circle mt-1" style="
+                            width:12px;height:12px;flex-shrink:0;
+                            background:{{ $log->status === 'used' ? '#10B981' : ($log->status === 'expired' ? '#94A3B8' : '#F59E0B') }}
+                        "></div>
+                        @if(!$loop->last)
+                        <div style="width:2px;flex:1;background:#E2E8F0;margin-top:4px"></div>
+                        @endif
+                    </div>
+                    {{-- Content --}}
+                    <div class="flex-grow-1 pb-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="small">
+                                <span class="fw-semibold">{{ $log->fromMurid->name }}</span>
+                                <i class="bi bi-arrow-right text-muted mx-1" style="font-size:.7rem"></i>
+                                <span class="fw-semibold">{{ $log->usedByUser?->name ?? '—' }}</span>
+                            </div>
+                            <span class="badge ms-2 {{ $log->status === 'used' ? 'bg-success' : ($log->status === 'expired' ? 'bg-secondary' : 'bg-warning text-dark') }}" style="font-size:.65rem">
+                                {{ $log->status === 'used' ? 'Berhasil' : ($log->status === 'expired' ? 'Expired' : 'Pending') }}
+                            </span>
+                        </div>
+                        <div class="text-muted" style="font-size:.7rem;margin-top:2px">
+                            <i class="bi bi-clock me-1"></i>
+                            {{ ($log->used_at ?? $log->created_at)->format('H:i, d/m/Y') }}
+                        </div>
+                    </div>
+                </div>
+                @endforeach
             </div>
         </div>
         @endif

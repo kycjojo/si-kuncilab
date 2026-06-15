@@ -24,8 +24,8 @@
                     <td class="small">{{ $pm->tanggal_pinjam->format('d/m/Y') }}</td>
                     <td class="small">{{ substr($pm->jam_mulai,0,5) }}–{{ substr($pm->jam_selesai_rencana,0,5) }}</td>
                     <td>
-                        <span class="badge bg-{{ \App\Models\Peminjaman::statusBadge($pm->status) }}">
-                            {{ \App\Models\Peminjaman::statusLabel($pm->status) }}
+                        <span class="badge bg-{{ $pm->statusBadgeForDisplay() }}">
+                            {{ $pm->statusLabelForDisplay() }}
                         </span>
                     </td>
                     <td>

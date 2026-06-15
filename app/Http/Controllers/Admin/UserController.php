@@ -106,7 +106,11 @@ class UserController extends Controller
 
     public function show(User $user)
     {
-        $peminjaman = $user->peminjaman()->with('lab')->latest()->take(10)->get();
+        $peminjaman = $user->peminjaman()
+            ->with(['lab', 'passKunciKeluar.usedByUser'])
+            ->latest()
+            ->take(10)
+            ->get();
         $pelanggaran = $user->pelanggaran()->with('peminjaman.lab', 'dicatatOleh')->latest()->get();
         return view('admin.users.show', compact('user', 'peminjaman', 'pelanggaran'));
     }

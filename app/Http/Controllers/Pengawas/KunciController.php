@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pengawas;
 use App\Http\Controllers\Controller;
 use App\Models\Peminjaman;
 use App\Models\PenyerahanKunci;
+use App\Models\PassKunciToken;
 use Illuminate\Http\Request;
 
 class KunciController extends Controller
@@ -28,9 +29,25 @@ class KunciController extends Controller
      */
     public function show(Peminjaman $peminjaman)
     {
-        $peminjaman->load(['murid', 'lab', 'penyerahanKunci.pengawas', 'checklistPengembalian', 'pelanggaran.dicatatOleh']);
+        $peminjaman->load([
+            'murid',
+            'lab',
+            'penyerahanKunci.pengawas',
+            'checklistPengembalian',
+            'pelanggaran.dicatatOleh',
+            'passKunciKeluar.usedByUser',
+        ]);
 
-        return view('pengawas.kunci.show', compact('peminjaman'));
+        // Transfer log: tokens related to this peminjaman (as source or destination)
+        $transferLogs = PassKunciToken::with(['fromMurid', 'usedByUser', 'fromPeminjaman.lab', 'toPeminjaman.lab'])
+            ->where(function ($q) use ($peminjaman) {
+                $q->where('from_peminjaman_id', $peminjaman->id)
+                  ->orWhere('to_peminjaman_id', $peminjaman->id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('pengawas.kunci.show', compact('peminjaman', 'transferLogs'));
     }
 
     /**

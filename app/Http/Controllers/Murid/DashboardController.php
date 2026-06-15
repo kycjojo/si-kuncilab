@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Murid;
 
 use App\Http\Controllers\Controller;
+use App\Models\Lab;
 use App\Models\Peminjaman;
 
 class DashboardController extends Controller
@@ -11,13 +12,13 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        $peminjaman_aktif = Peminjaman::with('lab')
+        $peminjaman_aktif = Peminjaman::with('lab', 'checklistPengembalian')
             ->where('murid_id', $user->id)
             ->whereIn('status', ['menunggu', 'disetujui', 'berlangsung', 'checklist_diisi'])
             ->latest()
             ->first();
 
-        $riwayat_terbaru = Peminjaman::with('lab')
+        $riwayat_terbaru = Peminjaman::with(['lab', 'passKunciKeluar.usedByUser'])
             ->where('murid_id', $user->id)
             ->whereIn('status', ['selesai', 'terlambat', 'ditolak'])
             ->latest()
@@ -31,6 +32,8 @@ class DashboardController extends Controller
             'poin_pelanggaran' => $user->poin_pelanggaran,
         ];
 
-        return view('murid.dashboard', compact('peminjaman_aktif', 'riwayat_terbaru', 'stats'));
+        $labs = Lab::where('is_active', true)->orderBy('nama')->get();
+
+        return view('murid.dashboard', compact('peminjaman_aktif', 'riwayat_terbaru', 'stats', 'labs'));
     }
 }

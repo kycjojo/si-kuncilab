@@ -11,7 +11,7 @@ class PeminjamanController extends Controller
 {
     public function index()
     {
-        $peminjaman = Peminjaman::with('lab')
+        $peminjaman = Peminjaman::with(['lab', 'passKunciKeluar.usedByUser'])
             ->where('murid_id', auth()->id())
             ->latest()
             ->paginate(10);
@@ -77,7 +77,14 @@ class PeminjamanController extends Controller
         if ($peminjaman->murid_id !== auth()->id()) {
             abort(403);
         }
-        $peminjaman->load(['lab', 'penyerahanKunci.pengawas', 'checklistPengembalian', 'pelanggaran']);
+        $peminjaman->load([
+            'lab',
+            'penyerahanKunci.pengawas',
+            'checklistPengembalian',
+            'pelanggaran',
+            'passKunciKeluar.usedByUser',
+            'passKunciMasuk.fromMurid',
+        ]);
         return view('murid.peminjaman.show', compact('peminjaman'));
     }
 }

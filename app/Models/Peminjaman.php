@@ -78,6 +78,20 @@ class Peminjaman extends Model
         return $this->hasOne(ChecklistPengembalian::class);
     }
 
+    public function passKunciKeluar()
+    {
+        return $this->hasOne(PassKunciToken::class, 'from_peminjaman_id')
+            ->where('status', 'used')
+            ->latestOfMany('used_at');
+    }
+
+    public function passKunciMasuk()
+    {
+        return $this->hasOne(PassKunciToken::class, 'to_peminjaman_id')
+            ->where('status', 'used')
+            ->latestOfMany('used_at');
+    }
+
     public function pelanggaran()
     {
         return $this->hasMany(Pelanggaran::class);
@@ -92,5 +106,28 @@ class Peminjaman extends Model
     {
         if (!$this->jam_selesai_aktual) return false;
         return $this->jam_selesai_aktual > $this->jam_selesai_rencana;
+    }
+
+    public function statusLabelForDisplay(): string
+    {
+        $passKunci = $this->relationLoaded('passKunciKeluar')
+            ? $this->passKunciKeluar
+            : $this->passKunciKeluar()->with('usedByUser')->first();
+
+        if ($passKunci) {
+            $namaMurid = $passKunci->usedByUser?->name ?? 'murid lain';
+            return 'Diserahkan ke ' . $namaMurid;
+        }
+
+        return self::statusLabel($this->status);
+    }
+
+    public function statusBadgeForDisplay(): string
+    {
+        $passKunci = $this->relationLoaded('passKunciKeluar')
+            ? $this->passKunciKeluar
+            : $this->passKunciKeluar()->exists();
+
+        return $passKunci ? 'info' : self::statusBadge($this->status);
     }
 }

@@ -24,7 +24,7 @@ class DashboardController extends Controller
             'total_pelanggaran'=> Pelanggaran::count(),
         ];
 
-        $peminjaman_terbaru = Peminjaman::with(['murid', 'lab'])
+        $peminjaman_terbaru = Peminjaman::with(['murid', 'lab', 'passKunciKeluar.usedByUser'])
             ->latest()
             ->take(10)
             ->get();

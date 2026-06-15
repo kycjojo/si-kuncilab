@@ -3,7 +3,7 @@
 @section('page-title', 'Laporan Peminjaman')
 
 @section('content')
-<div class="card mb-4">
+<div class="card mb-4 no-print">
     <div class="card-body">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-3">
@@ -39,12 +39,17 @@
                 <a href="{{ route('admin.laporan.peminjaman') }}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
             </div>
             <div class="col-md-1">
-                <button type="button" onclick="window.print()" class="btn btn-outline-success btn-sm w-100">
+                <a href="{{ route('admin.laporan.peminjaman.print', request()->except('page')) }}" target="_blank" rel="noopener" class="btn btn-outline-success btn-sm w-100" title="Cetak semua hasil filter">
                     <i class="bi bi-printer"></i>
-                </button>
+                </a>
             </div>
         </form>
     </div>
+</div>
+
+<div class="print-only print-report-heading">
+    <h1>SiKunci Lab</h1>
+    <p>Laporan Peminjaman Kunci Laboratorium - Total {{ $peminjaman->total() }} data</p>
 </div>
 
 <div class="card">
@@ -64,7 +69,7 @@
                     <th>Jam Selesai Aktual</th>
                     <th>Status</th>
                     <th>Pengawas</th>
-                    <th>Aksi</th>
+                    <th class="print-hidden">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -80,9 +85,9 @@
                     <td class="small">{{ substr($pm->jam_mulai,0,5) }}</td>
                     <td class="small">{{ substr($pm->jam_selesai_rencana,0,5) }}</td>
                     <td class="small">{{ $pm->jam_selesai_aktual ? substr($pm->jam_selesai_aktual,0,5) : '—' }}</td>
-                    <td><span class="badge bg-{{ \App\Models\Peminjaman::statusBadge($pm->status) }}">{{ \App\Models\Peminjaman::statusLabel($pm->status) }}</span></td>
+                    <td><span class="badge bg-{{ $pm->statusBadgeForDisplay() }}">{{ $pm->statusLabelForDisplay() }}</span></td>
                     <td class="small">{{ optional($pm->penyerahanKunci?->pengawas)->name ?? '—' }}</td>
-                    <td>
+                    <td class="print-hidden">
                         <a href="{{ route('admin.laporan.detail', $pm) }}" class="btn btn-sm btn-outline-info" title="Lihat detail & foto">
                             <i class="bi bi-eye"></i>
                         </a>

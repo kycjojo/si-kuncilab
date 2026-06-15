@@ -3,6 +3,12 @@
 @section('page-title', 'Detail Peminjaman — Laporan Admin')
 
 @section('content')
+@php $passKunciKeluar = $peminjaman->passKunciKeluar; @endphp
+<div class="print-only print-report-heading">
+    <h1>SiKunci Lab</h1>
+    <p>Bukti Peminjaman/Pengembalian - {{ $peminjaman->murid->name }} - {{ $peminjaman->lab->nama }} - {{ $peminjaman->tanggal_pinjam->format('d/m/Y') }}</p>
+</div>
+
 <div class="row g-4">
     {{-- Kolom Kiri: Info Peminjaman --}}
     <div class="col-lg-5">
@@ -50,7 +56,7 @@
                     @endif
                     <tr>
                         <td class="text-muted small fw-semibold">Status</td>
-                        <td><span class="badge bg-{{ \App\Models\Peminjaman::statusBadge($peminjaman->status) }} fs-6">{{ \App\Models\Peminjaman::statusLabel($peminjaman->status) }}</span></td>
+                        <td><span class="badge bg-{{ $peminjaman->statusBadgeForDisplay() }} fs-6">{{ $peminjaman->statusLabelForDisplay() }}</span></td>
                     </tr>
                     @if($peminjaman->disetujuiOleh)
                     <tr><td class="text-muted small fw-semibold">Disetujui oleh</td><td class="small">{{ $peminjaman->disetujuiOleh->name }}</td></tr>
@@ -69,8 +75,19 @@
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
                     <tr><td class="text-muted small" style="width:45%">Pengawas</td><td class="fw-semibold">{{ $peminjaman->penyerahanKunci->pengawas->name }}</td></tr>
+                    @if($passKunciKeluar)
+                    <tr>
+                        <td class="text-muted small">Pengembalian</td>
+                        <td>
+                            <span class="badge bg-info text-dark">{{ $peminjaman->statusLabelForDisplay() }}</span>
+                            <div class="text-muted small mt-1">{{ $passKunciKeluar->used_at?->format('H:i, d/m/Y') ?? 'Selesai via pass kunci' }}</div>
+                        </td>
+                    </tr>
+                    @endif
                     <tr><td class="text-muted small">Waktu Serah</td><td>{{ $peminjaman->penyerahanKunci->waktu_serah?->format('H:i, d/m/Y') ?? '—' }}</td></tr>
+                    @unless($passKunciKeluar)
                     <tr><td class="text-muted small">Waktu Kembali</td><td>{{ $peminjaman->penyerahanKunci->waktu_terima_kembali?->format('H:i, d/m/Y') ?? '—' }}</td></tr>
+                    @endunless
                 </table>
             </div>
         </div>
@@ -195,8 +212,9 @@
     </div>
 </div>
 
-<div class="mt-4 d-flex gap-2">
+<div class="mt-4 d-flex gap-2 no-print">
     <a href="{{ route('admin.laporan.peminjaman') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali ke Laporan</a>
     <a href="{{ route('admin.users.show', $peminjaman->murid) }}" class="btn btn-outline-primary"><i class="bi bi-person me-1"></i>Profil Murid</a>
+    <a href="{{ route('admin.laporan.detail.print', $peminjaman) }}" target="_blank" rel="noopener" class="btn btn-outline-success"><i class="bi bi-printer me-1"></i>Cetak Bukti</a>
 </div>
 @endsection

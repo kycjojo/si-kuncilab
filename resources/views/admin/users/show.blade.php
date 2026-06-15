@@ -73,7 +73,7 @@
                         <tr>
                             <td>{{ $pm->lab->nama }}</td>
                             <td class="small">{{ $pm->tanggal_pinjam->format('d/m/Y') }}</td>
-                            <td><span class="badge bg-{{ \App\Models\Peminjaman::statusBadge($pm->status) }}">{{ \App\Models\Peminjaman::statusLabel($pm->status) }}</span></td>
+                            <td><span class="badge bg-{{ $pm->statusBadgeForDisplay() }}">{{ $pm->statusLabelForDisplay() }}</span></td>
                         </tr>
                         @empty
                         <tr><td colspan="3" class="text-center text-muted py-3">Belum ada peminjaman</td></tr>

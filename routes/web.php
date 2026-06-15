@@ -12,6 +12,7 @@ use App\Http\Controllers\Pengawas\PelanggaranController;
 use App\Http\Controllers\Murid\DashboardController as MuridDashboard;
 use App\Http\Controllers\Murid\PeminjamanController;
 use App\Http\Controllers\Murid\ChecklistController;
+use App\Http\Controllers\Murid\PassKunciController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,9 +62,13 @@ Route::prefix('admin')
 
         // Laporan
         Route::get('/laporan/peminjaman', [LaporanController::class, 'peminjaman'])->name('laporan.peminjaman');
+        Route::get('/laporan/peminjaman/print', [LaporanController::class, 'printPeminjaman'])->name('laporan.peminjaman.print');
+        Route::get('/laporan/peminjaman/{peminjaman}/print', [LaporanController::class, 'printDetail'])->name('laporan.detail.print');
         Route::get('/laporan/peminjaman/{peminjaman}', [LaporanController::class, 'detail'])->name('laporan.detail');
         Route::get('/laporan/keterlambatan', [LaporanController::class, 'keterlambatan'])->name('laporan.keterlambatan');
+        Route::get('/laporan/keterlambatan/print', [LaporanController::class, 'printKeterlambatan'])->name('laporan.keterlambatan.print');
         Route::get('/laporan/pelanggaran', [LaporanController::class, 'pelanggaran'])->name('laporan.pelanggaran');
+        Route::get('/laporan/pelanggaran/print', [LaporanController::class, 'printPelanggaran'])->name('laporan.pelanggaran.print');
     });
 
 /*
@@ -116,4 +121,11 @@ Route::prefix('murid')
         // Checklist Pengembalian
         Route::get('/peminjaman/{peminjaman}/checklist', [ChecklistController::class, 'create'])->name('checklist.create');
         Route::post('/peminjaman/{peminjaman}/checklist', [ChecklistController::class, 'store'])->name('checklist.store');
+
+        // Pass Kunci Langsung
+        Route::get('/peminjaman/{peminjaman}/pass-kunci', [PassKunciController::class, 'showQr'])->name('pass-kunci.qr');
+        Route::post('/peminjaman/{peminjaman}/pass-kunci/generate', [PassKunciController::class, 'generate'])->name('pass-kunci.generate');
+        Route::post('/peminjaman/{peminjaman}/pass-kunci/status', [PassKunciController::class, 'status'])->name('pass-kunci.status');
+        Route::get('/ambil-kunci', [PassKunciController::class, 'scanPage'])->name('pass-kunci.scan');
+        Route::post('/ambil-kunci/redeem', [PassKunciController::class, 'redeem'])->name('pass-kunci.redeem');
     });

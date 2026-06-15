@@ -3,7 +3,7 @@
 @section('page-title', 'Laporan Pelanggaran')
 
 @section('content')
-<div class="card mb-4">
+<div class="card mb-4 no-print">
     <div class="card-body">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-3">
@@ -31,10 +31,15 @@
                 <a href="{{ route('admin.laporan.pelanggaran') }}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
             </div>
             <div class="col-md-2">
-                <button onclick="window.print()" type="button" class="btn btn-outline-success btn-sm w-100"><i class="bi bi-printer me-1"></i>Print</button>
+                <a href="{{ route('admin.laporan.pelanggaran.print', request()->except('page')) }}" target="_blank" rel="noopener" class="btn btn-outline-success btn-sm w-100"><i class="bi bi-printer me-1"></i>Print</a>
             </div>
         </form>
     </div>
+</div>
+
+<div class="print-only print-report-heading">
+    <h1>SiKunci Lab</h1>
+    <p>Laporan Pelanggaran Laboratorium - Total {{ $pelanggaran->total() }} data</p>
 </div>
 
 <div class="card">
