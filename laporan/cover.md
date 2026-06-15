@@ -6,9 +6,9 @@
 {\LARGE\bfseries Alur Peminjaman Kunci}\\
 {\LARGE\bfseries }\vspace{2cm}
 {\large Disusun oleh:}\\[0.3cm]
-{\large\bfseries Rochmad Djojo Oktabianto}\\[1.5cm]
-{\large\bfseries Teknik Informatika}\\
-{\large\bfseries Politeknik Elektronika Negri Surabaya}\\
+{\large\bfseries Tim Pengembang}\\[1.5cm]
+{\large\bfseries Program Studi}\\
+{\large\bfseries Institusi}\\
 {\large\bfseries 2026}
 \end{center}
 \newpage
