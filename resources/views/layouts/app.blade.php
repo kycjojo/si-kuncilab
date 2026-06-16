@@ -225,6 +225,37 @@
         .sidebar-toggle { display: none; }
         .print-only { display: none !important; }
 
+        /* ── Topbar back button ── */
+        .topbar-back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            color: #64748B;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background .15s, color .15s, opacity .2s, transform .2s;
+            opacity: 0;
+            transform: translateX(-4px);
+            padding: 0;
+        }
+        .topbar-back-btn.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .topbar-back-btn:hover {
+            background: #F1F5F9;
+            color: var(--primary);
+        }
+        .topbar-back-btn:active {
+            background: #E2E8F0;
+            transform: scale(.93);
+        }
+
         @media (max-width: 991.98px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.show { transform: translateX(0); }
@@ -469,8 +500,8 @@
             <button class="btn btn-sm btn-light sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn">
                 <i class="bi bi-list fs-5"></i>
             </button>
-            <button class="btn btn-sm btn-light" onclick="window.history.back()" id="back-btn" title="Kembali">
-                <i class="bi bi-arrow-left fs-5"></i>
+            <button class="topbar-back-btn" id="back-btn" title="Kembali" aria-label="Kembali" style="display:none" onclick="goBack()">
+                <i class="bi bi-arrow-left-short"></i>
             </button>
         </div>
         <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
@@ -518,6 +549,34 @@
     function closeSidebar() {
         document.getElementById('sidebar').classList.remove('show');
         document.getElementById('sidebarOverlay').classList.remove('show');
+    }
+
+    // ── Back button: hanya tampil jika ada history dalam app ini ──
+    (function () {
+        const btn = document.getElementById('back-btn');
+        if (!btn) return;
+
+        const key = 'sikunci_nav_depth';
+        const depth = parseInt(sessionStorage.getItem(key) || '0', 10);
+
+        // Tambah depth setiap navigasi baru (bukan back)
+        if (!sessionStorage.getItem('_back_nav')) {
+            sessionStorage.setItem(key, depth + 1);
+        }
+        sessionStorage.removeItem('_back_nav');
+
+        if (depth > 0) {
+            btn.style.display = 'flex';
+            requestAnimationFrame(() => btn.classList.add('visible'));
+        }
+    })();
+
+    function goBack() {
+        sessionStorage.setItem('_back_nav', '1');
+        const key = 'sikunci_nav_depth';
+        const depth = parseInt(sessionStorage.getItem(key) || '1', 10);
+        sessionStorage.setItem(key, Math.max(0, depth - 1));
+        window.history.back();
     }
 
     (function () {
