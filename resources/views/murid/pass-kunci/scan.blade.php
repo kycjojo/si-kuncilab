@@ -177,8 +177,15 @@
 @endpush
 
 @section('content')
-{{-- data-no-spa on the whole page wrapper ensures SPA engine never intercepts
-     camera-related fetches and prevents the stream getting killed mid-scan --}}
+{{--
+    IMPORTANT: All scripts are inside @section('content') (inside #spa-content).
+    This ensures SPA engine's executeScripts() re-runs camera init on every navigation.
+    data-no-spa on the wrapper prevents SPA from intercepting links inside this page.
+--}}
+
+{{-- Load jsQR inside content so SPA executeScripts() re-loads it each visit --}}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
 <div class="row justify-content-center g-4" data-no-spa>
 
     {{-- ── Scanner Column ── --}}
@@ -309,10 +316,6 @@
     </div>
 
 </div>
-@endsection
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
 (function () {
     /* ── Config ── */
@@ -378,7 +381,7 @@
             activeStream.getTracks().forEach(t => t.stop());
             activeStream = null;
         }
-        video.srcObject = null;
+        if (video) video.srcObject = null;
     }
 
     /* ── Start camera with graceful fallback ── */
@@ -393,12 +396,17 @@
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             showCameraError(
                 'Browser Tidak Didukung',
-                'Browser Anda tidak mendukung akses kamera. Gunakan Chrome, Firefox, atau Safari versi terbaru di HTTPS.'
+                'Browser Anda tidak mendukung akses kamera. Gunakan Chrome, Firefox, atau Safari versi terbaru di HTTPS/localhost.'
             );
             return;
         }
 
-        // Check jsQR is loaded
+        // Wait for jsQR to load (it loads from CDN script above, may take a moment)
+        let jsQRRetries = 0;
+        while (typeof jsQR !== 'function' && jsQRRetries < 30) {
+            await new Promise(r => setTimeout(r, 100));
+            jsQRRetries++;
+        }
         if (typeof jsQR !== 'function') {
             showCameraError('Library Scan Gagal', 'jsQR tidak dapat dimuat. Periksa koneksi internet dan muat ulang halaman.');
             return;
@@ -435,7 +443,7 @@
         if (!stream) {
             showCameraError(
                 'Kamera Tidak Tersedia',
-                'Tidak ada kamera yang dapat diakses. Pastikan perangkat memiliki kamera dan tidak digunakan aplikasi lain.'
+                'Tidak ada kamera yang dapat diakses. Pastikan perangkat memiliki kamera dan tidak sedang digunakan aplikasi lain.'
             );
             return;
         }
@@ -459,7 +467,7 @@
     }
 
     function showCameraError(title, msg) {
-        statusBar.style.display   = 'none';
+        statusBar.style.display    = 'none';
         cameraErrTitle.textContent = title;
         cameraErrMsg.textContent   = msg;
         cameraErrEl.style.display  = 'block';
@@ -504,7 +512,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': getCsrf(),   // always fresh from meta tag
+                    'X-CSRF-TOKEN': getCsrf(),
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({ token }),
@@ -536,7 +544,7 @@
     }
 
     /* ── Retry scan (reuse existing stream if still active) ── */
-    retryBtn.addEventListener('click', () => {
+    if (retryBtn) retryBtn.addEventListener('click', () => {
         hideExtras();
         errorEl.style.display = 'none';
 
@@ -552,15 +560,14 @@
     });
 
     /* ── Retry after camera error ── */
-    retryCameraBtn.addEventListener('click', () => {
+    if (retryCameraBtn) retryCameraBtn.addEventListener('click', () => {
         placeholder.style.display = 'flex';
         startCamera();
     });
 
     /* ── Back button — stop camera before leaving ── */
-    backBtn.addEventListener('click', (e) => {
+    if (backBtn) backBtn.addEventListener('click', () => {
         stopCamera();
-        // Let normal SPA navigation handle the href
     });
 
     /* ── Stop camera if user navigates away (SPA or normal) ── */
@@ -572,4 +579,4 @@
 
 })();
 </script>
-@endpush
+@endsection

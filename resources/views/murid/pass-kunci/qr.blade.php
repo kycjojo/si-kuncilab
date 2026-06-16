@@ -325,16 +325,25 @@
     </div>
 
 </div>
-@endsection
 
-@push('scripts')
+{{--
+    QR code + polling scripts are inside @section('content') (inside #spa-content).
+    This ensures SPA engine's executeScripts() re-runs them on every navigation.
+    Same pattern as murid dashboard Quick Borrow and scan.blade.php.
+--}}
+
+{{-- Load QRCode library inside content so SPA re-loads it on each visit --}}
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
 (function () {
     const generateUrl = '{{ route("murid.pass-kunci.generate", $peminjaman) }}';
     const statusUrl   = '{{ route("murid.pass-kunci.status", $peminjaman) }}';
     const historyUrl  = '{{ route("murid.peminjaman.index") }}';
-    const csrfToken   = '{{ csrf_token() }}';
+
+    /* Always read fresh CSRF from meta tag (stays in sync with SPA engine) */
+    function getCsrf() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    }
 
     const loadingEl   = document.getElementById('qr-loading');
     const readyEl     = document.getElementById('qr-ready');
@@ -381,13 +390,19 @@
         currentToken = null;
 
         try {
+            // Wait for QRCode library to be ready (CDN may still be loading)
+            let qrRetries = 0;
+            while ((!window.QRCode || typeof window.QRCode.toCanvas !== 'function') && qrRetries < 30) {
+                await new Promise(r => setTimeout(r, 100));
+                qrRetries++;
+            }
             if (!window.QRCode || typeof window.QRCode.toCanvas !== 'function') {
                 throw new Error('Library QR gagal dimuat. Refresh halaman atau cek koneksi internet.');
             }
 
             const res  = await fetch(generateUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf(), 'Accept': 'application/json' },
             });
             const data = await res.json();
 
@@ -446,7 +461,7 @@
         try {
             const res = await fetch(statusUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf(), 'Accept': 'application/json' },
                 body: JSON.stringify({ token: currentToken }),
             });
             const data = await res.json();
@@ -486,9 +501,15 @@
         }, 1500);
     }
 
-    refreshBtn.addEventListener('click', generate);
-    retryBtn.addEventListener('click', generate);
+    if (refreshBtn) refreshBtn.addEventListener('click', generate);
+    if (retryBtn) retryBtn.addEventListener('click', generate);
     window.addEventListener('beforeunload', () => {
+        stopTicker();
+        stopStatusPolling();
+    });
+    /* Stop pollers when SPA navigates away */
+    window.addEventListener('sikunci:page-loaded', () => {
+        closing = true;
         stopTicker();
         stopStatusPolling();
     });
@@ -496,4 +517,4 @@
     generate();
 })();
 </script>
-@endpush
+@endsection
