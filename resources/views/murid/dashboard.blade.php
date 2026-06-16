@@ -4,6 +4,8 @@
 
 @section('content')
 @php $user = auth()->user(); @endphp
+<div data-realtime-page data-realtime-interval="4000">
+<div data-realtime-region="murid-dashboard">
 
 {{-- Blokir Warning --}}
 @if($user->is_blocked)
@@ -136,43 +138,6 @@
                 </div>
             </div>
         </div>
-        @push('scripts')
-        <script>
-        (function() {
-            const cards = document.querySelectorAll('.quick-lab-card');
-            const panel = document.getElementById('quick-form-panel');
-            const labId = document.getElementById('q-lab-id');
-            const labDisplay = document.getElementById('q-lab-display');
-            const jamMulai = document.getElementById('q-jam-mulai');
-            const jamSelesai = document.getElementById('q-jam-selesai');
-            const submitBtn = document.getElementById('q-submit');
-            const sesiBtns = document.querySelectorAll('.sesi-btn');
-            let selectedLab = null, selectedSesi = null;
-
-            cards.forEach(c => c.addEventListener('click', function() {
-                cards.forEach(x => { x.style.borderColor = 'transparent'; x.style.background = ''; });
-                this.style.borderColor = '#4F46E5';
-                this.style.background = '#EEF2FF';
-                selectedLab = { id: this.dataset.labId, name: this.dataset.labName };
-                labId.value = selectedLab.id;
-                labDisplay.textContent = selectedLab.name;
-                selectedSesi = null;
-                sesiBtns.forEach(b => b.classList.remove('active'));
-                submitBtn.disabled = true;
-                panel.style.display = 'block';
-            }));
-
-            sesiBtns.forEach(b => b.addEventListener('click', function() {
-                sesiBtns.forEach(x => x.classList.remove('active'));
-                this.classList.add('active');
-                selectedSesi = { start: this.dataset.start, end: this.dataset.end };
-                jamMulai.value = selectedSesi.start;
-                jamSelesai.value = selectedSesi.end;
-                submitBtn.disabled = !selectedLab;
-            }));
-        })();
-        </script>
-        @endpush
         @endif
 
     </div>
@@ -311,4 +276,52 @@
     </div>
 
 </div>
+</div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+(function() {
+    function initQuickBorrow() {
+        const form = document.getElementById('quick-borrow-form');
+        if (!form || form.dataset.quickBorrowReady === '1') return;
+
+        form.dataset.quickBorrowReady = '1';
+
+        const cards = document.querySelectorAll('.quick-lab-card');
+        const panel = document.getElementById('quick-form-panel');
+        const labId = document.getElementById('q-lab-id');
+        const labDisplay = document.getElementById('q-lab-display');
+        const jamMulai = document.getElementById('q-jam-mulai');
+        const jamSelesai = document.getElementById('q-jam-selesai');
+        const submitBtn = document.getElementById('q-submit');
+        const sesiBtns = document.querySelectorAll('.sesi-btn');
+        let selectedLab = null;
+
+        cards.forEach(c => c.addEventListener('click', function() {
+            cards.forEach(x => { x.style.borderColor = 'transparent'; x.style.background = ''; });
+            this.style.borderColor = '#4F46E5';
+            this.style.background = '#EEF2FF';
+            selectedLab = { id: this.dataset.labId, name: this.dataset.labName };
+            labId.value = selectedLab.id;
+            labDisplay.textContent = selectedLab.name;
+            sesiBtns.forEach(b => b.classList.remove('active'));
+            submitBtn.disabled = true;
+            panel.style.display = 'block';
+        }));
+
+        sesiBtns.forEach(b => b.addEventListener('click', function() {
+            sesiBtns.forEach(x => x.classList.remove('active'));
+            this.classList.add('active');
+            jamMulai.value = this.dataset.start;
+            jamSelesai.value = this.dataset.end;
+            submitBtn.disabled = !selectedLab;
+        }));
+    }
+
+    initQuickBorrow();
+    window.addEventListener('sikunci:content-refreshed', initQuickBorrow);
+})();
+</script>
+@endpush

@@ -3,6 +3,8 @@
 @section('page-title', 'Riwayat Peminjaman')
 
 @section('content')
+<div data-realtime-page data-realtime-interval="4000">
+<div data-realtime-region="murid-peminjaman-index">
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-clock-history text-primary me-2"></i>Riwayat Peminjaman Saya</span>
@@ -43,5 +45,7 @@
     @if($peminjaman->hasPages())
     <div class="card-footer">{{ $peminjaman->links() }}</div>
     @endif
+</div>
+</div>
 </div>
 @endsection

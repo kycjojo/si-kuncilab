@@ -3,7 +3,7 @@
 ## Tech stack
 - Laravel 11 + PHP 8.2+, MySQL (XAMPP), Bootstrap 5 + Chart.js + Bootstrap Icons (CDN, no npm)
 - **No frontend build step** — no package.json, no Vite. All CSS/JS from CDNs in `resources/views/layouts/app.blade.php`
-- QR generation: `qrcode.js` CDN. QR scanning: `jsQR` CDN. Add both to the layout or push to `@stack('scripts')` per-view.
+- QR generation: `qrcode.js` CDN (`https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js`). QR scanning: `jsQR` CDN. Add via `@stack('scripts')` per-view, not the layout.
 
 ## Project structure
 | Path | Purpose |
@@ -12,11 +12,11 @@
 | `app/Http/Controllers/Auth/` | Custom auth (no Breeze/Jetstream) |
 | `app/Http/Controllers/Admin/` | Admin: dashboard, users, labs, reports |
 | `app/Http/Controllers/Pengawas/` | Supervisor: key handover, violations |
-| `app/Http/Controllers/Murid/` | Student: borrowing requests, checklists |
+| `app/Http/Controllers/Murid/` | Student: borrowing requests, checklists, pass kunci |
 | `app/Http/Middleware/` | `RoleMiddleware` (checks role), `CheckBlocked` (blocks students with poin >= 5) |
-| `app/Models/` | 6 models (+ new ones per feature below) |
+| `app/Models/` | 7 models: User, Lab, Peminjaman, PenyerahanKunci, ChecklistPengembalian, Pelanggaran, PassKunciToken |
 | `resources/views/` | Blade templates per role, `layouts/app.blade.php` as shell |
-| `database/migrations/` | Prefixed `2024_01_01_00000X` — run in strict numeric order |
+| `database/migrations/` | Prefixed `2024_01_01_00000X` — run in strict numeric order (001–008) |
 | `database/seeders/` | Creates admin + 2 pengawas + 5 murid + 8 labs |
 
 ## Roles and routing
@@ -24,7 +24,7 @@ Three roles with route prefixes: `admin/`, `pengawas/`, `murid/`. Middleware ali
 - `role:admin|pengawas|murid` — 403 on wrong role
 - `check.blocked` — murid routes only; logs out if `is_blocked = true`
 
-New middleware aliases must be registered here, not in `app/Http/Kernel.php` (Laravel 11 dropped Kernel).
+New middleware aliases must be registered in `bootstrap/app.php`, not in `app/Http/Kernel.php` (Laravel 11 dropped Kernel).
 
 ## Key commands
 ```bash
@@ -45,20 +45,22 @@ php artisan tinker
 |---|---|---|
 | Admin | admin@labsekolah.com | password |
 | Pengawas | pengawas@labsekolah.com | password |
+| Pengawas 2 | pengawas2@labsekolah.com | password |
 | Murid | ahmad@labsekolah.com | password |
 
 ## Database
 - Connection: `mysql`, database: `lab_key_system`, charset: `utf8mb4`
 - Session: `.env` uses `file`, `.env.example` uses `database` — **difference is intentional**
-- Queue: `sync` (no worker needed). Cache: `file`.
+- Queue: `sync` (no worker needed). Cache: `file`. Mail: `log` (no real email).
 - `peminjaman.status` is a MySQL `ENUM` column — adding a new status value requires an `ALTER TABLE` migration, not just a PHP constant.
 
 ## Peminjaman status flow
 `menunggu` → `disetujui` → `berlangsung` → `checklist_diisi` → `selesai` (or `terlambat`)
-- Pengawas approves/rejects, hands over key, receives key back
+- `ditolak` is also a valid terminal status (pengawas rejects)
 - `ChecklistPengembalian` record is created at `checklist_diisi`; 5 boolean fields + `foto_path`
 - Late returns: `jam_selesai_aktual > jam_selesai_rencana` (string comparison of HH:MM:SS)
 - `Peminjaman` table name is `peminjaman` (not `peminjamans`) — set via `$table = 'peminjaman'` in model
+- Active statuses used in guards: `['menunggu', 'disetujui', 'berlangsung', 'checklist_diisi']`
 
 ## Violation system
 - `poin_pelanggaran` assigned manually by Pengawas/Admin
@@ -68,9 +70,6 @@ php artisan tinker
 ## Photo uploads
 Stored at `storage/app/public/checklist-photos/`, served via `storage/` symlink. Run `php artisan storage:link`.
 
-## Reports
-Admin report routes have `print` variants returning A4 landscape layouts (`resources/views/admin/laporan/print/`).
-
 ## Tests
 No tests exist.
 
@@ -79,136 +78,32 @@ No tests exist.
 - `APP_LOCALE=id` — Carbon dates use the `id` locale (Indonesian day/month names)
 - App name: "SiKunci Lab"
 
----
-
-## Implemented: Quick Borrow (murid dashboard)
-
-`DashboardController` now passes `$labs` to the view. The dashboard (`resources/views/murid/dashboard.blade.php`) has a **Quick Borrow** card with clickable lab cards + session-time buttons that submits directly to `murid.peminjaman.store` via a hidden-field form (no page navigation). Only shown when student is not blocked and has no active peminjaman. Tujuan defaults to "Praktikum".
+## Realtime polling (layout)
+`layouts/app.blade.php` includes a built-in polling mechanism. Pages opt in by adding `data-realtime-page` to a wrapper element; regions to refresh are marked with `data-realtime-region="key"`. The layout polls `window.location.href` every N ms (default 5000) and swaps changed regions. A `sikunci:content-refreshed` CustomEvent fires on changes, and `window.dispatchEvent(new CustomEvent('sikunci:refresh-now'))` triggers an immediate refresh.
 
 ---
 
-## Planned: Pass Kunci Langsung
+## Implemented features
 
-Full spec for the next agent to implement. Read everything below before writing any code.
+### Quick Borrow (murid dashboard)
+`DashboardController` passes `$labs` to the view. The dashboard has a **Quick Borrow** card with clickable lab cards + session-time buttons that submits directly to `murid.peminjaman.store` via a hidden-field form. Only shown when student is not blocked and has no active peminjaman. Tujuan defaults to "Praktikum".
 
-### What it does
-Student A (holding key, status `berlangsung`) wants to hand the key directly to Student B without going through the Pengawas. Flow:
-1. A fills checklist + uploads photo (reuses existing `ChecklistController` or a new dedicated one)
-2. System generates a time-limited, single-use QR token → displayed on A's screen
-3. B opens their dashboard, clicks "Ambil Kunci", scans QR from A's screen via camera
-4. Server validates token (not used, not expired) → closes A's peminjaman, creates new `berlangsung` peminjaman for B, marks token used
-5. Pengawas gets a DB-visible transfer log (no email: `MAIL_MAILER=log`)
+### Pass Kunci Langsung (fully implemented)
+Student A (holding key) hands the key directly to Student B without going through the Pengawas.
 
-### New database table: `pass_kunci_tokens`
+**Status accepted by `showQr` and `generate`:** `['berlangsung', 'checklist_diisi']` — both are valid (the spec said only `berlangsung`, but the implementation accepts both).
 
-Migration file name: `2024_01_01_000007_create_pass_kunci_tokens_table.php`
+**Extra route vs. spec:** `pass-kunci.status` (POST `/peminjaman/{peminjaman}/pass-kunci/status`) exists in addition to the four spec routes. The QR page polls this every 2 seconds to detect when B has scanned.
 
-```php
-Schema::create('pass_kunci_tokens', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('from_peminjaman_id')->constrained('peminjaman')->onDelete('cascade');
-    $table->foreignId('from_murid_id')->constrained('users')->onDelete('cascade');
-    $table->string('token', 64)->unique();
-    $table->enum('status', ['unused', 'used', 'expired'])->default('unused');
-    $table->timestamp('expired_at');
-    $table->timestamp('used_at')->nullable();
-    $table->foreignId('used_by')->nullable()->constrained('users')->onDelete('set null');
-    $table->foreignId('to_peminjaman_id')->nullable()->constrained('peminjaman')->onDelete('set null');
-    $table->timestamps();
-});
-```
+**`redeem` logic:** Wraps in `DB::transaction()`. Creates B's peminjaman with `jam_mulai = now()` (not copied from A). Sets `PenyerahanKunci.pengawas_id = A's user id`.
 
-Model: `app/Models/PassKunciToken.php`, table name `pass_kunci_tokens`, casts `expired_at` and `used_at` as `datetime`, status as string.
+**Pengawas transfer log:** `pengawas.kunci.show` checks `isset($transferLogs)` — the controller must pass `$transferLogs` from a query like `PassKunciToken::where('from_peminjaman_id', ...)->orWhere('to_peminjaman_id', ...)->get()`.
 
-### No new `peminjaman.status` value needed
+**Model relationships on `Peminjaman`:**
+- `passKunciKeluar()` — hasOne PassKunciToken via `from_peminjaman_id` where status=used
+- `passKunciMasuk()` — hasOne PassKunciToken via `to_peminjaman_id` where status=used
+- `statusLabelForDisplay()` / `statusBadgeForDisplay()` — use these instead of raw `status` for display, they show "Diserahkan ke [name]" when pass kunci was used.
 
-When B scans successfully:
-- A's peminjaman: `status = 'selesai'`, `jam_selesai_aktual = now()->format('H:i:s')`
-- New peminjaman created for B: copy `lab_id`, `tanggal_pinjam`, `jam_mulai`, `jam_selesai_rencana` from A; set `murid_id = B->id`, `status = 'berlangsung'`, `tujuan = 'Pass kunci dari [A name]'`
-- New `PenyerahanKunci` for B's peminjaman: `pengawas_id = A->id` (use A as the "serah" party), `waktu_serah = now()`
+**PassKunciToken model:** `app/Models/PassKunciToken.php`, table `pass_kunci_tokens`. Relationships: `fromMurid()`, `usedByUser()`, `fromPeminjaman()`, `toPeminjaman()`.
 
-This avoids adding a new ENUM value to `peminjaman.status` (which requires `ALTER TABLE`).
-
-### Routes to add (in `routes/web.php`, inside murid prefix group)
-
-```php
-// Pass Kunci Langsung
-Route::get('/peminjaman/{peminjaman}/pass-kunci', [PassKunciController::class, 'showQr'])->name('pass-kunci.qr');
-Route::post('/peminjaman/{peminjaman}/pass-kunci/generate', [PassKunciController::class, 'generate'])->name('pass-kunci.generate');
-Route::get('/ambil-kunci', [PassKunciController::class, 'scanPage'])->name('pass-kunci.scan');
-Route::post('/ambil-kunci/redeem', [PassKunciController::class, 'redeem'])->name('pass-kunci.redeem');
-```
-
-All under `['auth', 'role:murid', 'check.blocked']`. No new middleware needed.
-
-### Controller: `app/Http/Controllers/Murid/PassKunciController.php`
-
-**`generate(Peminjaman $peminjaman)`** — POST
-- Guard: `$peminjaman->murid_id !== auth()->id()` → 403
-- Guard: `$peminjaman->status !== 'berlangsung'` → error
-- Guard: `$peminjaman->checklistPengembalian === null` → error ("Isi checklist dulu")
-- Invalidate all old tokens: `PassKunciToken::where('from_peminjaman_id', $peminjaman->id)->where('status', 'unused')->update(['status' => 'expired'])`
-- Generate token: `Str::random(48)` (URL-safe, fits in the 64-char column)
-- Create `PassKunciToken`: status=`unused`, `expired_at = now()->addMinutes(5)`
-- Return JSON `{ token, expired_at }` — the view calls this via `fetch()` and renders QR in JS
-
-**`showQr(Peminjaman $peminjaman)`** — GET
-- Returns a Blade view with a big QR canvas; JS calls `generate` endpoint on load, re-generates on timeout
-- QR encodes the token string (not a URL — scanning returns the raw token, sent to `redeem` by JS)
-
-**`scanPage()`** — GET
-- Returns a Blade view with a camera feed (`<video>` + `<canvas>`) using `jsQR` CDN library
-- On successful decode, JS POSTs token to `redeem`
-
-**`redeem(Request $request)`** — POST
-- `$request->validate(['token' => 'required|string'])`
-- Find token: `PassKunciToken::where('token', $token)->where('status', 'unused')->first()`
-- If not found → JSON `{ error: 'Token tidak valid atau sudah digunakan' }` 422
-- If `expired_at < now()` → update status to `expired` → JSON `{ error: 'QR sudah kadaluarsa' }` 422
-- B cannot be the same user as A: `$token->from_murid_id === auth()->id()` → 422
-- B must not have an active peminjaman (same check as `PeminjamanController::create`)
-- **Wrap in `DB::transaction()`**:
-  - Close A's peminjaman: `update(['status' => 'selesai', 'jam_selesai_aktual' => now()->format('H:i:s')])`
-  - Create B's peminjaman (copy fields, `murid_id = auth()->id()`, `status = 'berlangsung'`)
-  - Create `PenyerahanKunci` for B's peminjaman
-  - Update token: `status = 'used'`, `used_at = now()`, `used_by = auth()->id()`, `to_peminjaman_id = B's new peminjaman id`
-- Return JSON `{ success: true, peminjaman_id: B->id }`
-- JS on B's scan page redirects to `murid.peminjaman.show` on success
-
-### QR rendering (A's screen)
-
-Use `qrcode.js` from CDN — no npm:
-```html
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-```
-```js
-QRCode.toCanvas(document.getElementById('qr-canvas'), token, { width: 300 });
-```
-
-### QR scanning (B's screen)
-
-Use `jsQR` from CDN:
-```html
-<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-```
-```js
-// tick() reads video frame → canvas → jsQR(imageData) → sends token to redeem
-```
-
-### Token expiry enforcement
-
-`generate` sets `expired_at = now()->addMinutes(5)`. `redeem` checks `$token->expired_at < now()`. A background cleanup job is NOT needed (sync queue, no scheduler configured) — expired tokens stay in DB as audit log, just set status=`expired` lazily on redeem attempt.
-
-A's QR page should also auto-refresh before expiry: JS tracks countdown, calls `generate` again at T-0 and re-renders the canvas.
-
-### Checklist gate before QR
-
-The "Pass Kunci" button in the `berlangsung` dashboard card should only link to `pass-kunci.qr` if `$peminjaman_aktif->checklistPengembalian !== null`. Otherwise, direct to `murid.checklist.create` first. Do not skip the existing checklist flow — reuse it as-is.
-
-### Pengawas visibility
-
-Add a "Transfer Log" section to `pengawas.kunci.show` view: query `PassKunciToken::where('from_peminjaman_id', $peminjaman->id)->orWhere('to_peminjaman_id', $peminjaman->id)->get()` and display `from_murid`, `used_by` (to_murid), `used_at`.
-
-### Atomic safety note
-
-`redeem` MUST use `DB::transaction()`. A race condition is possible if two users scan simultaneously; the `unique` index on `token` plus the `status = 'unused'` guard inside the transaction is sufficient — the second transaction will find `status != 'unused'` and abort.
+**Checklist gate in dashboard:** "Pass Kunci" button only appears if `$peminjaman_aktif->checklistPengembalian !== null`, otherwise shows "Isi Checklist" button instead.

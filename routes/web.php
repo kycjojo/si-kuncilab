@@ -62,13 +62,9 @@ Route::prefix('admin')
 
         // Laporan
         Route::get('/laporan/peminjaman', [LaporanController::class, 'peminjaman'])->name('laporan.peminjaman');
-        Route::get('/laporan/peminjaman/print', [LaporanController::class, 'printPeminjaman'])->name('laporan.peminjaman.print');
-        Route::get('/laporan/peminjaman/{peminjaman}/print', [LaporanController::class, 'printDetail'])->name('laporan.detail.print');
         Route::get('/laporan/peminjaman/{peminjaman}', [LaporanController::class, 'detail'])->name('laporan.detail');
         Route::get('/laporan/keterlambatan', [LaporanController::class, 'keterlambatan'])->name('laporan.keterlambatan');
-        Route::get('/laporan/keterlambatan/print', [LaporanController::class, 'printKeterlambatan'])->name('laporan.keterlambatan.print');
         Route::get('/laporan/pelanggaran', [LaporanController::class, 'pelanggaran'])->name('laporan.pelanggaran');
-        Route::get('/laporan/pelanggaran/print', [LaporanController::class, 'printPelanggaran'])->name('laporan.pelanggaran.print');
     });
 
 /*

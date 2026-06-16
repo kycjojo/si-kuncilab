@@ -3,6 +3,8 @@
 @section('page-title', 'Dashboard Pengawas')
 
 @section('content')
+<div data-realtime-page data-realtime-interval="4000">
+<div data-realtime-region="pengawas-dashboard">
 {{-- Stat Cards --}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
@@ -165,5 +167,7 @@
             </tbody>
         </table>
     </div>
+</div>
+</div>
 </div>
 @endsection

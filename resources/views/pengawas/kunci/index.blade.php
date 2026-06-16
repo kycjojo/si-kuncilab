@@ -3,6 +3,8 @@
 @section('page-title', 'Kelola Kunci Lab')
 
 @section('content')
+<div data-realtime-page data-realtime-interval="4000">
+<div data-realtime-region="pengawas-kunci-index">
 <div class="card">
     <div class="card-header"><i class="bi bi-key-fill text-primary me-2"></i>Semua Peminjaman Aktif</div>
     <div class="table-responsive">
@@ -86,5 +88,7 @@
     @if($peminjaman->hasPages())
     <div class="card-footer">{{ $peminjaman->links() }}</div>
     @endif
+</div>
+</div>
 </div>
 @endsection

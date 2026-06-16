@@ -4,6 +4,8 @@
 
 @section('content')
 @php $passKunciKeluar = $peminjaman->passKunciKeluar; @endphp
+<div data-realtime-page data-realtime-interval="4000">
+<div data-realtime-region="pengawas-kunci-show">
 <div class="row g-4">
     {{-- Kolom Kiri: Info Peminjaman --}}
     <div class="col-lg-5">
@@ -263,5 +265,7 @@
 <div class="mt-4">
     <a href="{{ route('pengawas.kunci.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali ke Daftar Kunci</a>
     <a href="{{ route('pengawas.dashboard') }}" class="btn btn-outline-primary ms-2"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+</div>
+</div>
 </div>
 @endsection

@@ -20,16 +20,8 @@
             <div class="col-md-2">
                 <a href="{{ route('admin.laporan.keterlambatan') }}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
             </div>
-            <div class="col-md-2">
-                <a href="{{ route('admin.laporan.keterlambatan.print', request()->except('page')) }}" target="_blank" rel="noopener" class="btn btn-outline-success btn-sm w-100"><i class="bi bi-printer me-1"></i>Print</a>
-            </div>
         </form>
     </div>
-</div>
-
-<div class="print-only print-report-heading">
-    <h1>SiKunci Lab</h1>
-    <p>Laporan Keterlambatan Pengembalian Kunci - Total {{ $peminjaman->total() }} data</p>
 </div>
 
 <div class="card">
@@ -46,7 +38,7 @@
                     <th>Jam Selesai Aktual</th>
                     <th>Selisih</th>
                     <th>Status</th>
-                    <th class="print-hidden">Aksi</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -70,7 +62,7 @@
                         <span class="badge bg-danger">+{{ $menit }} menit</span>
                     </td>
                     <td><span class="badge bg-{{ $pm->statusBadgeForDisplay() }}">{{ $pm->statusLabelForDisplay() }}</span></td>
-                    <td class="print-hidden">
+                    <td>
                         <a href="{{ route('admin.laporan.detail', $pm) }}" class="btn btn-sm btn-outline-info" title="Lihat detail & foto">
                             <i class="bi bi-eye"></i>
                         </a>

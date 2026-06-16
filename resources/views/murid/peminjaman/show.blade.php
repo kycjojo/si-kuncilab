@@ -4,6 +4,8 @@
 
 @section('content')
 @php $passKunciKeluar = $peminjaman->passKunciKeluar; @endphp
+<div data-realtime-page data-realtime-interval="4000">
+<div data-realtime-region="murid-peminjaman-show">
 <div class="row g-4">
     <div class="col-lg-5">
         {{-- Info Card --}}
@@ -168,5 +170,7 @@
 
 <div class="mt-3">
     <a href="{{ route('murid.peminjaman.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+</div>
+</div>
 </div>
 @endsection

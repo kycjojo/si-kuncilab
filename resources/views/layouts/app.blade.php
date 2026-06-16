@@ -514,6 +514,79 @@
         document.getElementById('sidebar').classList.remove('show');
         document.getElementById('sidebarOverlay').classList.remove('show');
     }
+
+    (function () {
+        const page = document.querySelector('[data-realtime-page]');
+        if (!page) return;
+
+        const interval = Number(page.dataset.realtimeInterval || 5000);
+        let inFlight = false;
+
+        function isUserInteracting() {
+            if (document.hidden || document.querySelector('.modal.show')) return true;
+
+            const active = document.activeElement;
+            if (!active || active === document.body) return false;
+
+            return ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)
+                && Boolean(active.closest('[data-realtime-page]'));
+        }
+
+        async function refreshRealtimeRegions() {
+            if (inFlight || isUserInteracting()) return;
+
+            inFlight = true;
+            try {
+                const response = await fetch(window.location.href, {
+                    headers: {
+                        'Accept': 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-SiKunci-Realtime': '1',
+                    },
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                });
+
+                const contentType = response.headers.get('content-type') || '';
+                if (!response.ok || !contentType.includes('text/html')) return; // finally will still reset inFlight
+
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const changedRegions = [];
+
+                doc.querySelectorAll('[data-realtime-region]').forEach((incoming) => {
+                    const key = incoming.dataset.realtimeRegion;
+                    const current = document.querySelector(`[data-realtime-region="${key}"]`);
+
+                    if (!current) return;
+
+                    const currentHtml = current.innerHTML.trim();
+                    const incomingHtml = incoming.innerHTML.trim();
+
+                    if (currentHtml !== incomingHtml) {
+                        current.replaceWith(document.importNode(incoming, true));
+                        changedRegions.push(key);
+                    }
+                });
+
+                if (changedRegions.length > 0) {
+                    window.dispatchEvent(new CustomEvent('sikunci:content-refreshed', {
+                        detail: { regions: changedRegions },
+                    }));
+                }
+            } catch (error) {
+                // Realtime refresh is optional; the next poll can try again.
+            } finally {
+                inFlight = false;
+            }
+        }
+
+        window.addEventListener('sikunci:refresh-now', refreshRealtimeRegions);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) refreshRealtimeRegions();
+        });
+        setInterval(refreshRealtimeRegions, interval);
+    })();
 </script>
 @stack('scripts')
 </body>

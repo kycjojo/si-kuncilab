@@ -4,11 +4,6 @@
 
 @section('content')
 @php $passKunciKeluar = $peminjaman->passKunciKeluar; @endphp
-<div class="print-only print-report-heading">
-    <h1>SiKunci Lab</h1>
-    <p>Bukti Peminjaman/Pengembalian - {{ $peminjaman->murid->name }} - {{ $peminjaman->lab->nama }} - {{ $peminjaman->tanggal_pinjam->format('d/m/Y') }}</p>
-</div>
-
 <div class="row g-4">
     {{-- Kolom Kiri: Info Peminjaman --}}
     <div class="col-lg-5">
@@ -215,6 +210,5 @@
 <div class="mt-4 d-flex gap-2 no-print">
     <a href="{{ route('admin.laporan.peminjaman') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali ke Laporan</a>
     <a href="{{ route('admin.users.show', $peminjaman->murid) }}" class="btn btn-outline-primary"><i class="bi bi-person me-1"></i>Profil Murid</a>
-    <a href="{{ route('admin.laporan.detail.print', $peminjaman) }}" target="_blank" rel="noopener" class="btn btn-outline-success"><i class="bi bi-printer me-1"></i>Cetak Bukti</a>
 </div>
 @endsection
