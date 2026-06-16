@@ -88,14 +88,11 @@
 </div>
 </div>
 </div>
-@endsection
-
-@push('scripts')
 <script>
 document.getElementById('murid_id').addEventListener('change', function() {
-    const url = new URL(window.location);
+    var url = new URL(window.location);
     url.searchParams.set('murid_id', this.value);
     window.location = url;
 });
 </script>
-@endpush
+@endsection

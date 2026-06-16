@@ -72,12 +72,10 @@
 </div>
 </div>
 @endsection
-
-@push('scripts')
 <script>
 document.getElementById('role-select').addEventListener('change', function() {
     const muridFields = document.getElementById('murid-fields');
     muridFields.classList.toggle('d-none', this.value !== 'murid');
 });
 </script>
-@endpush
+@endsection

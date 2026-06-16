@@ -292,50 +292,65 @@
 
 </div>
 </div>{{-- end realtime-page --}}
-@endsection
 
-@push('scripts')
+{{--
+    Quick Borrow script is intentionally inside @section('content') (inside #spa-content),
+    NOT in @push('scripts'). This ensures the SPA engine's executeScripts() re-runs it
+    every time the user navigates back to this page.
+    If placed in @push('scripts') (outside #spa-content), it would only run once on first
+    load and be dead after any SPA navigation.
+--}}
 <script>
 (function() {
-    function initQuickBorrow() {
-        const form = document.getElementById('quick-borrow-form');
-        if (!form || form.dataset.quickBorrowReady === '1') return;
+    const form = document.getElementById('quick-borrow-form');
+    if (!form) return; // Quick Borrow not shown (blocked user or has active peminjaman)
 
-        form.dataset.quickBorrowReady = '1';
+    const cards      = document.querySelectorAll('.quick-lab-card');
+    const panel      = document.getElementById('quick-form-panel');
+    const labIdInput = document.getElementById('q-lab-id');
+    const labDisplay = document.getElementById('q-lab-display');
+    const jamMulai   = document.getElementById('q-jam-mulai');
+    const jamSelesai = document.getElementById('q-jam-selesai');
+    const submitBtn  = document.getElementById('q-submit');
+    const sesiBtns   = document.querySelectorAll('.sesi-btn');
+    let selectedLab  = null;
 
-        const cards = document.querySelectorAll('.quick-lab-card');
-        const panel = document.getElementById('quick-form-panel');
-        const labId = document.getElementById('q-lab-id');
-        const labDisplay = document.getElementById('q-lab-display');
-        const jamMulai = document.getElementById('q-jam-mulai');
-        const jamSelesai = document.getElementById('q-jam-selesai');
-        const submitBtn = document.getElementById('q-submit');
-        const sesiBtns = document.querySelectorAll('.sesi-btn');
-        let selectedLab = null;
-
-        cards.forEach(c => c.addEventListener('click', function() {
-            cards.forEach(x => { x.style.borderColor = 'transparent'; x.style.background = ''; });
+    // Lab card click — select lab and show time picker
+    cards.forEach(function(card) {
+        card.addEventListener('click', function() {
+            // Deselect all
+            cards.forEach(function(x) {
+                x.style.borderColor = 'transparent';
+                x.style.background  = '';
+            });
+            // Select this card
             this.style.borderColor = '#4F46E5';
-            this.style.background = '#EEF2FF';
-            selectedLab = { id: this.dataset.labId, name: this.dataset.labName };
-            labId.value = selectedLab.id;
-            labDisplay.textContent = selectedLab.name;
-            sesiBtns.forEach(b => b.classList.remove('active'));
-            submitBtn.disabled = true;
-            panel.style.display = 'block';
-        }));
+            this.style.background  = '#EEF2FF';
 
-        sesiBtns.forEach(b => b.addEventListener('click', function() {
-            sesiBtns.forEach(x => x.classList.remove('active'));
+            selectedLab      = { id: this.dataset.labId, name: this.dataset.labName };
+            labIdInput.value = selectedLab.id;
+            labDisplay.textContent = selectedLab.name;
+
+            // Reset session selection
+            sesiBtns.forEach(function(b) { b.classList.remove('active'); });
+            submitBtn.disabled = true;
+
+            // Show form panel
+            panel.style.display = 'block';
+        });
+    });
+
+    // Session button click — choose time slot
+    sesiBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            sesiBtns.forEach(function(x) { x.classList.remove('active'); });
             this.classList.add('active');
-            jamMulai.value = this.dataset.start;
+            jamMulai.value   = this.dataset.start;
             jamSelesai.value = this.dataset.end;
             submitBtn.disabled = !selectedLab;
-        }));
-    }
-
-    initQuickBorrow();
-    window.addEventListener('sikunci:content-refreshed', initQuickBorrow);
+        });
+    });
 })();
 </script>
-@endpush
+@endsection
+

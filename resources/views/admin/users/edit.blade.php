@@ -69,12 +69,9 @@
 </div>
 </div>
 </div>
-@endsection
-
-@push('scripts')
 <script>
 document.getElementById('role-select').addEventListener('change', function() {
     document.getElementById('murid-fields').classList.toggle('d-none', this.value !== 'murid');
 });
 </script>
-@endpush
+@endsection

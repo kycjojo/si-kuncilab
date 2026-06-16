@@ -106,18 +106,20 @@
     </div>
 </div>
 </form>
-@endsection
-
-@push('scripts')
 <script>
-document.getElementById('foto').addEventListener('change', function(e) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        document.getElementById('foto-preview').src = e.target.result;
-        document.getElementById('foto-preview-container').classList.remove('d-none');
-        document.getElementById('foto-placeholder').classList.add('d-none');
-    };
-    reader.readAsDataURL(e.target.files[0]);
-});
+(function() {
+    var fotoInput = document.getElementById('foto');
+    if (!fotoInput) return;
+    fotoInput.addEventListener('change', function(e) {
+        if (!e.target.files || !e.target.files[0]) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            document.getElementById('foto-preview').src = ev.target.result;
+            document.getElementById('foto-preview-container').classList.remove('d-none');
+            document.getElementById('foto-placeholder').classList.add('d-none');
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    });
+})();
 </script>
-@endpush
+@endsection

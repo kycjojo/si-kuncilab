@@ -174,30 +174,35 @@
         @endif
     </div>
 </div>
-@endsection
-
-@push('scripts')
 <script>
-const ctx = document.getElementById('peminjamanChart').getContext('2d');
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: {!! json_encode(array_column($chart_data, 'tanggal')) !!},
-        datasets: [{
-            label: 'Jumlah Peminjaman',
-            data: {!! json_encode(array_column($chart_data, 'count')) !!},
-            backgroundColor: 'rgba(79,70,229,0.8)',
-            borderRadius: 6,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+(function() {
+    var canvas = document.getElementById('peminjamanChart');
+    if (!canvas) return;
+    // Destroy existing chart instance if any (prevents canvas reuse error on SPA nav)
+    if (window._adminChart) {
+        window._adminChart.destroy();
+        window._adminChart = null;
     }
-});
+    var ctx = canvas.getContext('2d');
+    window._adminChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {!! json_encode(array_column($chart_data, 'tanggal')) !!},
+            datasets: [{
+                label: 'Jumlah Peminjaman',
+                data: {!! json_encode(array_column($chart_data, 'count')) !!},
+                backgroundColor: 'rgba(79,70,229,0.8)',
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+})();
 </script>
-@endpush
-
 </div>{{-- end realtime-region --}}
 </div>{{-- end realtime-page --}}
+@endsection

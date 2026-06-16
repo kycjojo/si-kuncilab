@@ -93,23 +93,22 @@
 </div>
 </div>
 </div>
-@endsection
-
-@push('scripts')
 <script>
 function pilihLab(id) {
     document.getElementById('lab-select').value = id;
-    document.querySelectorAll('[id^="lab-card-"]').forEach(c => {
+    document.querySelectorAll('[id^="lab-card-"]').forEach(function(c) {
         c.style.borderColor = 'transparent';
         c.style.background = '';
     });
-    const card = document.getElementById('lab-card-' + id);
-    card.style.borderColor = '#4F46E5';
-    card.style.background = '#EEF2FF';
+    var card = document.getElementById('lab-card-' + id);
+    if (card) {
+        card.style.borderColor = '#4F46E5';
+        card.style.background = '#EEF2FF';
+    }
 }
 
 // Highlight selected lab on load
-const selected = document.getElementById('lab-select').value;
+var selected = document.getElementById('lab-select').value;
 if (selected) pilihLab(selected);
 
 // Sync select -> card
@@ -117,4 +116,4 @@ document.getElementById('lab-select').addEventListener('change', function() {
     if (this.value) pilihLab(this.value);
 });
 </script>
-@endpush
+@endsection
