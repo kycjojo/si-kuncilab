@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Detail Peminjaman')
 @section('page-title', 'Detail Peminjaman — Laporan Admin')
+@section('back-url', route('admin.laporan.peminjaman'))
 
 @section('content')
 @php $passKunciKeluar = $peminjaman->passKunciKeluar; @endphp

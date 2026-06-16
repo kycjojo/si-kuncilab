@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Detail User')
 @section('page-title', 'Detail User')
+@section('back-url', route('admin.users.index'))
 
 @section('content')
 <div class="row g-4">

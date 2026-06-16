@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Ajukan Peminjaman')
 @section('page-title', 'Ajukan Peminjaman Lab')
+@section('back-url', route('murid.dashboard'))
 
 @section('content')
 {{-- Lab Cards Info --}}

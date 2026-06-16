@@ -238,14 +238,10 @@
             color: #64748B;
             font-size: 1.5rem;
             cursor: pointer;
-            transition: background .15s, color .15s, opacity .2s, transform .2s;
-            opacity: 0;
-            transform: translateX(-4px);
+            transition: background .15s, color .15s, transform .15s;
             padding: 0;
-        }
-        .topbar-back-btn.visible {
-            opacity: 1;
-            transform: translateX(0);
+            text-decoration: none;
+            flex-shrink: 0;
         }
         .topbar-back-btn:hover {
             background: #F1F5F9;
@@ -500,9 +496,11 @@
             <button class="btn btn-sm btn-light sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn">
                 <i class="bi bi-list fs-5"></i>
             </button>
-            <button class="topbar-back-btn" id="back-btn" title="Kembali" aria-label="Kembali" style="display:none" onclick="goBack()">
+            @hasSection('back-url')
+            <a href="@yield('back-url')" class="topbar-back-btn" title="Kembali" aria-label="Kembali">
                 <i class="bi bi-arrow-left-short"></i>
-            </button>
+            </a>
+            @endif
         </div>
         <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
         <div class="d-flex align-items-center gap-2">
@@ -551,33 +549,7 @@
         document.getElementById('sidebarOverlay').classList.remove('show');
     }
 
-    // ── Back button: hanya tampil jika ada history dalam app ini ──
-    (function () {
-        const btn = document.getElementById('back-btn');
-        if (!btn) return;
-
-        const key = 'sikunci_nav_depth';
-        const depth = parseInt(sessionStorage.getItem(key) || '0', 10);
-
-        // Tambah depth setiap navigasi baru (bukan back)
-        if (!sessionStorage.getItem('_back_nav')) {
-            sessionStorage.setItem(key, depth + 1);
-        }
-        sessionStorage.removeItem('_back_nav');
-
-        if (depth > 0) {
-            btn.style.display = 'flex';
-            requestAnimationFrame(() => btn.classList.add('visible'));
-        }
-    })();
-
-    function goBack() {
-        sessionStorage.setItem('_back_nav', '1');
-        const key = 'sikunci_nav_depth';
-        const depth = parseInt(sessionStorage.getItem(key) || '1', 10);
-        sessionStorage.setItem(key, Math.max(0, depth - 1));
-        window.history.back();
-    }
+    // ── Back button: handled server-side via @section('back-url') ──
 
     (function () {
         const page = document.querySelector('[data-realtime-page]');

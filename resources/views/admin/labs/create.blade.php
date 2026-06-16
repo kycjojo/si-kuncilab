@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Tambah Lab')
 @section('page-title', 'Tambah Lab')
+@section('back-url', route('admin.labs.index'))
 
 @section('content')
 <div class="row justify-content-center">

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Edit Lab')
 @section('page-title', 'Edit Lab')
+@section('back-url', route('admin.labs.index'))
 
 @section('content')
 <div class="row justify-content-center">

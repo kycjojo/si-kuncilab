@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Detail Peminjaman')
 @section('page-title', 'Detail Peminjaman')
+@section('back-url', route('murid.peminjaman.index'))
 
 @section('content')
 @php $passKunciKeluar = $peminjaman->passKunciKeluar; @endphp

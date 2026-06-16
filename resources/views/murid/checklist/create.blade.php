@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Checklist Pengembalian')
 @section('page-title', 'Checklist Pengembalian')
+@section('back-url', route('murid.peminjaman.index'))
 
 @section('content')
 {{-- Header Info --}}

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Pass Kunci — QR Code')
 @section('page-title', 'Pass Kunci Langsung')
+@section('back-url', route('murid.peminjaman.index'))
 
 @push('styles')
 <style>

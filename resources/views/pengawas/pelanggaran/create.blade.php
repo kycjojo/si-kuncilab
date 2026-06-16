@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Catat Pelanggaran')
 @section('page-title', 'Catat Pelanggaran')
+@section('back-url', route('pengawas.pelanggaran.index'))
 
 @section('content')
 <div class="row justify-content-center">

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Ambil Kunci — Scan QR')
 @section('page-title', 'Ambil Kunci')
+@section('back-url', route('murid.dashboard'))
 
 @push('styles')
 <style>
