@@ -5,10 +5,10 @@
 @section('content')
 @php $user = auth()->user(); @endphp
 <div data-realtime-page data-realtime-interval="4000">
-<div data-realtime-region="murid-dashboard">
 
 {{-- Blokir Warning --}}
 @if($user->is_blocked)
+<div data-realtime-region="murid-block-warning">
 <div class="row g-4 fade-in-up">
     <div class="col-lg-8">
         <div class="alert alert-danger d-flex gap-3 align-items-center mb-0" role="alert">
@@ -28,6 +28,7 @@
         </div>
     </div>
 </div>
+</div>{{-- end realtime-region --}}
 @endif
 
 {{-- Poin Alert --}}
@@ -45,10 +46,10 @@
     @endif
 @endif
 
-{{-- Main grid: 2-column layout to fill horizontal space --}}
+{{-- Main grid: 2-column layout --}}
 <div class="row g-4">
 
-    {{-- ── LEFT COLUMN (welcome + active content) ── --}}
+    {{-- ── LEFT COLUMN ── --}}
     <div class="col-lg-7">
 
         {{-- Selamat Datang --}}
@@ -79,9 +80,13 @@
             @endif
         </div>
 
-        {{-- Quick Borrow (tidak ada peminjaman aktif) --}}
+        {{--
+            Quick Borrow — intentionally OUTSIDE any data-realtime-region.
+            This prevents the polling from resetting the form every 4 seconds
+            while the student is selecting a lab and session.
+        --}}
         @if(!$user->is_blocked && !$peminjaman_aktif)
-        <div class="card mb-4 fade-in-up delay-1">
+        <div class="card mb-4 fade-in-up delay-1" id="quick-borrow-card">
             <div class="card-header d-flex align-items-center gap-2">
                 <i class="bi bi-lightning-fill text-warning"></i>
                 <span>Quick Borrow</span>
@@ -142,10 +147,11 @@
 
     </div>
 
-    {{-- ── RIGHT COLUMN (stats + status) ── --}}
+    {{-- ── RIGHT COLUMN (stats + active peminjaman + history) ── --}}
     <div class="col-lg-5">
 
-        {{-- Stat cards grid --}}
+        {{-- Stat cards — realtime region --}}
+        <div data-realtime-region="murid-stats">
         <div class="row g-3 mb-4">
             <div class="col-6">
                 <div class="card text-center p-3 h-100 fade-in-up delay-1">
@@ -174,8 +180,10 @@
                 </div>
             </div>
         </div>
+        </div>{{-- end murid-stats region --}}
 
-        {{-- Active Peminjaman card (when user has one) --}}
+        {{-- Active Peminjaman — realtime region --}}
+        <div data-realtime-region="murid-active-peminjaman">
         @if($peminjaman_aktif)
         <div class="card border-primary border-2 mb-4 fade-in-up delay-2">
             <div class="card-header bg-primary text-white py-2">
@@ -225,7 +233,6 @@
             </div>
         </div>
         @elseif(!$user->is_blocked)
-        {{-- Empty state (no active peminjaman) --}}
         <div class="card mb-4 fade-in-up delay-2" style="border:2px dashed #CBD5E1;box-shadow:none">
             <div class="card-body text-center py-4">
                 <i class="bi bi-calendar-plus text-muted fs-1 mb-2 d-block"></i>
@@ -241,8 +248,10 @@
             </div>
         </div>
         @endif
+        </div>{{-- end murid-active-peminjaman region --}}
 
-        {{-- Riwayat Terbaru (always visible) --}}
+        {{-- Riwayat Terbaru — realtime region --}}
+        <div data-realtime-region="murid-riwayat">
         <div class="card fade-in-up delay-3">
             <div class="card-header d-flex justify-content-between align-items-center py-2">
                 <span style="font-size:.85rem"><i class="bi bi-clock-history text-primary me-1"></i>Riwayat Terbaru</span>
@@ -277,11 +286,12 @@
             </div>
             @endif
         </div>
+        </div>{{-- end murid-riwayat region --}}
+
     </div>
 
 </div>
-</div>
-</div>
+</div>{{-- end realtime-page --}}
 @endsection
 
 @push('scripts')
