@@ -162,11 +162,24 @@
 }
 .how-step .txt { font-size: .8rem; color: #475569; line-height: 1.45; }
 .how-step .txt strong { color: #1E293B; }
+
+/* Camera permission info box */
+.camera-info-box {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: .8rem;
+    color: #1D4ED8;
+    margin-top: .75rem;
+}
 </style>
 @endpush
 
 @section('content')
-<div class="row justify-content-center g-4">
+{{-- data-no-spa on the whole page wrapper ensures SPA engine never intercepts
+     camera-related fetches and prevents the stream getting killed mid-scan --}}
+<div class="row justify-content-center g-4" data-no-spa>
 
     {{-- ── Scanner Column ── --}}
     <div class="col-lg-6">
@@ -232,16 +245,21 @@
             {{-- Camera permission error --}}
             <div id="camera-error-screen" style="display:none;padding:1.5rem;text-align:center">
                 <i class="bi bi-camera-video-off fs-1 text-muted d-block mb-2"></i>
-                <div class="fw-semibold text-muted mb-1">Kamera Tidak Tersedia</div>
-                <div class="small text-muted">Berikan izin akses kamera di browser, lalu muat ulang halaman.</div>
-                <button class="btn btn-sm btn-outline-primary mt-3" onclick="location.reload()">
-                    <i class="bi bi-arrow-clockwise me-1"></i>Muat Ulang
+                <div class="fw-semibold text-muted mb-1" id="camera-error-title">Kamera Tidak Tersedia</div>
+                <div class="small text-muted mb-3" id="camera-error-msg">Berikan izin akses kamera di browser, lalu muat ulang halaman.</div>
+                <button class="btn btn-sm btn-outline-primary" id="btn-retry-camera">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
                 </button>
+                <div class="camera-info-box mt-3 text-start">
+                    <strong><i class="bi bi-lightbulb me-1"></i>Tips:</strong>
+                    Pastikan Anda menggunakan <strong>HTTPS</strong> atau <strong>localhost</strong>.
+                    Browser memblokir akses kamera di halaman HTTP biasa.
+                </div>
             </div>
         </div>
 
         <div class="mt-3 fade-in-up delay-1">
-            <a href="{{ route('murid.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ route('murid.dashboard') }}" class="btn btn-outline-secondary btn-sm" id="btn-back-dashboard">
                 <i class="bi bi-arrow-left me-1"></i>Kembali ke Dashboard
             </a>
         </div>
@@ -297,90 +315,210 @@
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
 (function () {
+    /* ── Config ── */
     const redeemUrl = '{{ route("murid.pass-kunci.redeem") }}';
     const showBase  = '{{ url("murid/peminjaman") }}';
-    const csrfToken = '{{ csrf_token() }}';
 
+    /* Always read CSRF from the meta tag (stays in sync with SPA engine) */
+    function getCsrf() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    }
+
+    /* ── DOM refs ── */
     const video       = document.getElementById('video');
     const scanCanvas  = document.getElementById('scan-canvas');
-    const scanCtx     = scanCanvas.getContext('2d', { willReadFrequently: true });
     const overlay     = document.getElementById('scan-overlay');
     const placeholder = document.getElementById('camera-placeholder');
     const statusBar   = document.getElementById('scan-status-bar');
     const successEl   = document.getElementById('success-screen');
     const errorEl     = document.getElementById('error-screen');
     const cameraErrEl = document.getElementById('camera-error-screen');
-    const errorDetail = document.getElementById('error-detail');
-    const successTitle  = document.getElementById('success-title');
-    const successDetail = document.getElementById('success-detail');
-    const successLink   = document.getElementById('success-link');
-    const retryBtn      = document.getElementById('btn-retry');
+    const cameraErrTitle = document.getElementById('camera-error-title');
+    const cameraErrMsg   = document.getElementById('camera-error-msg');
+    const errorDetail    = document.getElementById('error-detail');
+    const successTitle   = document.getElementById('success-title');
+    const successDetail  = document.getElementById('success-detail');
+    const successLink    = document.getElementById('success-link');
+    const retryBtn       = document.getElementById('btn-retry');
+    const retryCameraBtn = document.getElementById('btn-retry-camera');
+    const backBtn        = document.getElementById('btn-back-dashboard');
 
-    let scanning = false;
-    let raf      = null;
+    /* ── State ── */
+    let scanning    = false;
+    let raf         = null;
+    let activeStream = null;
+    let scanCtx     = null;
 
-    // ── Status bar states ──
+    try {
+        scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
+    } catch (e) {
+        scanCtx = scanCanvas.getContext('2d');
+    }
+
+    /* ── Status bar templates ── */
     const BARS = {
         waiting:    `<div class="spinner-border spinner-border-sm text-primary" role="status"></div><span class="text-muted">Menunggu akses kamera…</span>`,
         scanning:   `<div class="dot-pulse"></div><span class="text-primary fw-semibold">Memindai… Arahkan ke QR Code</span>`,
         processing: `<div class="spinner-border spinner-border-sm text-success" role="status"></div><span class="text-success fw-semibold">Memproses transfer kunci…</span>`,
     };
-
     function setStatus(key) { statusBar.innerHTML = BARS[key] || ''; }
 
     function hideExtras() {
         successEl.style.display   = 'none';
         errorEl.style.display     = 'none';
         cameraErrEl.style.display = 'none';
+        statusBar.style.display   = 'flex';
     }
 
-    async function startCamera() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            video.srcObject = stream;
-            await video.play();
-
-            placeholder.style.display = 'none';
-            overlay.style.display     = 'flex';
-            setStatus('scanning');
-            scanning = true;
-            tick();
-        } catch {
-            statusBar.style.display = 'none';
-            cameraErrEl.style.display = 'block';
+    /* ── Stop camera stream cleanly ── */
+    function stopCamera() {
+        scanning = false;
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+        if (activeStream) {
+            activeStream.getTracks().forEach(t => t.stop());
+            activeStream = null;
         }
+        video.srcObject = null;
     }
 
+    /* ── Start camera with graceful fallback ── */
+    async function startCamera() {
+        hideExtras();
+        setStatus('waiting');
+
+        // Stop any previous stream first
+        stopCamera();
+
+        // Check if browser supports mediaDevices
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showCameraError(
+                'Browser Tidak Didukung',
+                'Browser Anda tidak mendukung akses kamera. Gunakan Chrome, Firefox, atau Safari versi terbaru di HTTPS.'
+            );
+            return;
+        }
+
+        // Check jsQR is loaded
+        if (typeof jsQR !== 'function') {
+            showCameraError('Library Scan Gagal', 'jsQR tidak dapat dimuat. Periksa koneksi internet dan muat ulang halaman.');
+            return;
+        }
+
+        let stream = null;
+
+        // Try rear camera first, fall back to any camera
+        const constraints = [
+            { video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+            { video: { facingMode: 'environment' } },
+            { video: { facingMode: 'user' } },
+            { video: true },
+        ];
+
+        for (const constraint of constraints) {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraint);
+                break; // Got a stream, stop trying
+            } catch (err) {
+                // NotAllowedError = permission denied — don't try more constraints
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    showCameraError(
+                        'Izin Kamera Ditolak',
+                        'Akses kamera ditolak. Klik ikon kunci/kamera di address bar browser dan izinkan akses, lalu tekan "Coba Lagi".'
+                    );
+                    return;
+                }
+                // Other errors — try next constraint
+                stream = null;
+            }
+        }
+
+        if (!stream) {
+            showCameraError(
+                'Kamera Tidak Tersedia',
+                'Tidak ada kamera yang dapat diakses. Pastikan perangkat memiliki kamera dan tidak digunakan aplikasi lain.'
+            );
+            return;
+        }
+
+        activeStream = stream;
+        video.srcObject = stream;
+
+        try {
+            await video.play();
+        } catch (err) {
+            stopCamera();
+            showCameraError('Kamera Gagal Diputar', 'Terjadi kesalahan saat menampilkan kamera: ' + err.message);
+            return;
+        }
+
+        placeholder.style.display = 'none';
+        overlay.style.display     = 'flex';
+        setStatus('scanning');
+        scanning = true;
+        tick();
+    }
+
+    function showCameraError(title, msg) {
+        statusBar.style.display   = 'none';
+        cameraErrTitle.textContent = title;
+        cameraErrMsg.textContent   = msg;
+        cameraErrEl.style.display  = 'block';
+    }
+
+    /* ── QR scanning loop ── */
     function tick() {
         if (!scanning) return;
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+
+        if (video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
             scanCanvas.width  = video.videoWidth;
             scanCanvas.height = video.videoHeight;
             scanCtx.drawImage(video, 0, 0, scanCanvas.width, scanCanvas.height);
-            const img  = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+
+            let img;
+            try {
+                img = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+            } catch (e) {
+                // Security error (e.g. cross-origin) — skip frame
+                raf = requestAnimationFrame(tick);
+                return;
+            }
+
             const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-            if (code?.data) {
+            if (code && code.data) {
                 scanning = false;
                 cancelAnimationFrame(raf);
+                raf = null;
                 redeem(code.data);
                 return;
             }
         }
+
         raf = requestAnimationFrame(tick);
     }
 
+    /* ── Redeem token via API ── */
     async function redeem(token) {
         setStatus('processing');
         try {
-            const res  = await fetch(redeemUrl, {
+            const res = await fetch(redeemUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrf(),   // always fresh from meta tag
+                    'Accept': 'application/json',
+                },
                 body: JSON.stringify({ token }),
+                credentials: 'same-origin',
             });
+
             const data = await res.json();
 
-            if (!res.ok) throw new Error(data.error || 'Gagal memproses.');
+            if (res.status === 419) {
+                throw new Error('Sesi kedaluwarsa. Muat ulang halaman dan coba lagi.');
+            }
+            if (!res.ok) throw new Error(data.error || `Gagal memproses (HTTP ${res.status}).`);
 
+            // SUCCESS
             stopCamera();
             statusBar.style.display = 'none';
             overlay.style.display   = 'none';
@@ -391,27 +529,47 @@
             successEl.style.display   = 'block';
 
         } catch (err) {
-            errorDetail.textContent = err.message;
+            errorDetail.textContent = err.message || 'Terjadi kesalahan tidak diketahui.';
             statusBar.style.display = 'none';
             errorEl.style.display   = 'block';
         }
     }
 
-    function stopCamera() {
-        scanning = false;
-        cancelAnimationFrame(raf);
-        video.srcObject?.getTracks().forEach(t => t.stop());
-    }
-
+    /* ── Retry scan (reuse existing stream if still active) ── */
     retryBtn.addEventListener('click', () => {
         hideExtras();
-        statusBar.style.display = 'flex';
-        setStatus('scanning');
-        scanning = true;
-        tick();
+        errorEl.style.display = 'none';
+
+        if (activeStream && activeStream.active) {
+            // Stream still alive — just restart scanning loop
+            setStatus('scanning');
+            scanning = true;
+            tick();
+        } else {
+            // Stream died — restart camera from scratch
+            startCamera();
+        }
     });
 
+    /* ── Retry after camera error ── */
+    retryCameraBtn.addEventListener('click', () => {
+        placeholder.style.display = 'flex';
+        startCamera();
+    });
+
+    /* ── Back button — stop camera before leaving ── */
+    backBtn.addEventListener('click', (e) => {
+        stopCamera();
+        // Let normal SPA navigation handle the href
+    });
+
+    /* ── Stop camera if user navigates away (SPA or normal) ── */
+    window.addEventListener('beforeunload', stopCamera);
+    window.addEventListener('sikunci:page-loaded', stopCamera);
+
+    /* ── Init ── */
     startCamera();
+
 })();
 </script>
 @endpush
