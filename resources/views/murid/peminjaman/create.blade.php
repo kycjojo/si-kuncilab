@@ -8,7 +8,7 @@
 <div class="row g-3 mb-4">
     @foreach($labs as $lab)
     <div class="col-6 col-md-3">
-        <div class="card text-center p-3 h-100" style="cursor:pointer;border:2px solid transparent;transition:all .2s" onclick="pilihLab({{ $lab->id }})" id="lab-card-{{ $lab->id }}">
+        <div class="card text-center p-3 h-100 fade-in-up delay-{{ ($loop->index % 4) + 1 }}" style="cursor:pointer;border:2px solid transparent;transition:all .2s" onclick="pilihLab({{ $lab->id }})" id="lab-card-{{ $lab->id }}">
             <div class="fs-4 mb-1">🏫</div>
             <div class="fw-bold small">{{ $lab->nama }}</div>
             <div class="text-muted" style="font-size:.72rem"><i class="bi bi-people me-1"></i>{{ $lab->kapasitas }} orang</div>
@@ -20,7 +20,7 @@
 
 <div class="row justify-content-center">
 <div class="col-lg-7">
-<div class="card">
+<div class="card fade-in-up delay-2">
     <div class="card-header"><i class="bi bi-plus-circle-fill text-primary me-2"></i>Form Pengajuan Peminjaman</div>
     <div class="card-body p-4">
         @if($errors->any())

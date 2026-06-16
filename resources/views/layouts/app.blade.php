@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Sistem Peminjaman Kunci Laboratorium Sekolah">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'SiKunci Lab') — Sistem Peminjaman Lab</title>
 
     <!-- Bootstrap 5 -->
@@ -14,370 +15,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-    <style>
-        :root {
-            --primary: #4F46E5;
-            --primary-dark: #3730A3;
-            --primary-light: #818CF8;
-            --secondary: #06B6D4;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --danger: #EF4444;
-            --sidebar-width: 260px;
-            --sidebar-bg: #1E1B4B;
-            --sidebar-text: #C7D2FE;
-            --sidebar-active: #4F46E5;
-            --topbar-height: 64px;
-            --body-bg: #F1F5F9;
-            --card-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06);
-        }
-
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--body-bg);
-            color: #1E293B;
-        }
-
-        /* ── Sidebar ── */
-        .sidebar {
-            position: fixed;
-            top: 0; left: 0;
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: var(--sidebar-bg);
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-            transition: transform .3s ease;
-            overflow-y: auto;
-        }
-
-        .sidebar-brand {
-            padding: 20px 24px;
-            border-bottom: 1px solid rgba(255,255,255,.08);
-        }
-        .sidebar-brand h5 {
-            color: #fff;
-            font-weight: 700;
-            font-size: 1rem;
-            margin: 0;
-        }
-        .sidebar-brand .badge-role {
-            font-size: .65rem;
-            padding: 3px 8px;
-            border-radius: 20px;
-            margin-top: 4px;
-            display: inline-block;
-        }
-
-        .sidebar-nav { flex: 1; padding: 12px 0; }
-        .nav-section-title {
-            font-size: .65rem;
-            font-weight: 700;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,.35);
-            padding: 12px 24px 4px;
-        }
-        .sidebar .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 24px;
-            color: var(--sidebar-text);
-            text-decoration: none;
-            font-size: .875rem;
-            font-weight: 500;
-            border-radius: 0;
-            transition: all .2s;
-            position: relative;
-        }
-        .sidebar .nav-link:hover {
-            background: rgba(255,255,255,.06);
-            color: #fff;
-        }
-        .sidebar .nav-link.active {
-            background: var(--sidebar-active);
-            color: #fff;
-        }
-        .sidebar .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 3px;
-            background: var(--primary-light);
-            border-radius: 0 2px 2px 0;
-        }
-        .sidebar .nav-link i { font-size: 1.1rem; width: 20px; flex-shrink: 0; }
-
-        .sidebar-footer {
-            padding: 16px 24px;
-            border-top: 1px solid rgba(255,255,255,.08);
-        }
-        .sidebar-footer .user-info { color: rgba(255,255,255,.8); font-size: .8rem; }
-        .sidebar-footer .user-name { font-weight: 600; color: #fff; }
-
-        /* ── Main Content ── */
-        .main-wrapper {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ── Topbar ── */
-        .topbar {
-            height: var(--topbar-height);
-            background: #fff;
-            border-bottom: 1px solid #E2E8F0;
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-            gap: 16px;
-        }
-        .topbar-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1E293B;
-            flex: 1;
-        }
-
-        /* ── Page Content ── */
-        .page-content { padding: 24px; flex: 1; }
-
-        /* ── Cards ── */
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: var(--card-shadow);
-        }
-        .card-header {
-            background: transparent;
-            border-bottom: 1px solid #F1F5F9;
-            padding: 16px 20px;
-            font-weight: 600;
-            font-size: .9rem;
-        }
-
-        /* ── Stat Cards ── */
-        .stat-card {
-            border-radius: 12px;
-            padding: 20px;
-            color: #fff;
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            right: -20px; top: -20px;
-            width: 100px; height: 100px;
-            background: rgba(255,255,255,.1);
-            border-radius: 50%;
-        }
-        .stat-card .stat-icon {
-            font-size: 2rem;
-            opacity: .8;
-        }
-        .stat-card .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            line-height: 1;
-        }
-        .stat-card .stat-label {
-            font-size: .8rem;
-            opacity: .85;
-        }
-
-        /* ── Badge overrides ── */
-        .badge { font-weight: 500; }
-
-        /* ── Tables ── */
-        .table { font-size: .875rem; }
-        .table th {
-            font-weight: 600;
-            font-size: .75rem;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: #64748B;
-            border-top: none;
-        }
-
-        /* ── Buttons ── */
-        .btn-primary {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            border-color: var(--primary-dark);
-        }
-
-        /* ── Alert flash ── */
-        .alert { border: none; border-radius: 10px; font-size: .875rem; }
-
-        /* ── Mobile sidebar toggle ── */
-        .sidebar-toggle { display: none; }
-        .print-only { display: none !important; }
-
-        /* ── Topbar back button ── */
-        .topbar-back-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            color: #64748B;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: background .15s, color .15s, transform .15s;
-            padding: 0;
-            text-decoration: none;
-            flex-shrink: 0;
-        }
-        .topbar-back-btn:hover {
-            background: #F1F5F9;
-            color: var(--primary);
-        }
-        .topbar-back-btn:active {
-            background: #E2E8F0;
-            transform: scale(.93);
-        }
-
-        @media (max-width: 991.98px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.show { transform: translateX(0); }
-            .main-wrapper { margin-left: 0; }
-            .sidebar-toggle { display: block; }
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0,0,0,.5);
-                z-index: 999;
-            }
-            .sidebar-overlay.show { display: block; }
-        }
-
-        @media print {
-            @page {
-                size: A4 landscape;
-                margin: 12mm;
-            }
-
-            html,
-            body {
-                background: #fff !important;
-                color: #111827 !important;
-                font-size: 11px;
-            }
-
-            .sidebar,
-            .sidebar-overlay,
-            .topbar,
-            .no-print,
-            .btn,
-            form,
-            .card-footer,
-            .pagination,
-            .print-hidden {
-                display: none !important;
-            }
-
-            .print-only {
-                display: block !important;
-            }
-
-            .main-wrapper {
-                display: block !important;
-                margin-left: 0 !important;
-                min-height: auto !important;
-            }
-
-            .page-content {
-                padding: 0 !important;
-            }
-
-            .card {
-                border: 0 !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-                break-inside: auto;
-            }
-
-            .card-header {
-                background: #fff !important;
-                border-bottom: 1px solid #111827 !important;
-                color: #111827 !important;
-                padding: 0 0 8px !important;
-                margin-bottom: 8px;
-            }
-
-            .card-body {
-                padding: 0 !important;
-            }
-
-            .table-responsive {
-                overflow: visible !important;
-            }
-
-            table {
-                border-collapse: collapse !important;
-                width: 100% !important;
-            }
-
-            thead {
-                display: table-header-group;
-            }
-
-            tr {
-                break-inside: avoid;
-                page-break-inside: avoid;
-            }
-
-            .table th,
-            .table td {
-                background: #fff !important;
-                border: 1px solid #cbd5e1 !important;
-                color: #111827 !important;
-                padding: 4px 6px !important;
-            }
-
-            .badge {
-                background: #fff !important;
-                border: 1px solid #111827 !important;
-                color: #111827 !important;
-            }
-
-            .print-report-heading {
-                border-bottom: 2px solid #111827;
-                margin-bottom: 12px;
-                padding-bottom: 10px;
-            }
-
-            .print-report-heading h1 {
-                font-size: 18px;
-                margin: 0 0 4px;
-                text-transform: uppercase;
-            }
-
-            .print-report-heading p {
-                margin: 0;
-            }
-        }
-    </style>
+    <!-- SiKunci Premium CSS -->
+    <link href="{{ asset('css/sikunci.css') }}" rel="stylesheet">
 
     @stack('styles')
 </head>
 <body>
+
+<!-- SPA Loading Bar -->
+<div class="spa-progress-bar" id="spaProgressBar"></div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
 
 <!-- Sidebar Overlay (mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -478,7 +127,7 @@
                 </div>
             @endif
         </div>
-        <form action="{{ route('logout') }}" method="POST">
+        <form action="{{ route('logout') }}" method="POST" data-no-spa="true">
             @csrf
             <button type="submit" class="btn btn-sm btn-outline-danger w-100" id="logout-btn">
                 <i class="bi bi-box-arrow-right"></i> Logout
@@ -491,7 +140,7 @@
 <div class="main-wrapper">
 
     <!-- Topbar -->
-    <header class="topbar">
+    <header class="topbar" id="topbar">
         <div class="d-flex align-items-center gap-1">
             <button class="btn btn-sm btn-light sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn">
                 <i class="bi bi-list fs-5"></i>
@@ -502,7 +151,7 @@
             </a>
             @endif
         </div>
-        <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
+        <div class="topbar-title" id="topbarTitle">@yield('page-title', 'Dashboard')</div>
         <div class="d-flex align-items-center gap-2">
             <span class="text-muted small d-none d-md-inline">
                 <i class="bi bi-calendar3"></i>
@@ -513,116 +162,487 @@
 
     <!-- Page Content -->
     <main class="page-content">
-        {{-- Flash Messages --}}
-        @if(session('success'))
-            <div class="alert alert-success d-flex align-items-center gap-2 mb-4 no-print" role="alert">
-                <i class="bi bi-check-circle-fill"></i>
-                {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4 no-print" role="alert">
-                <i class="bi bi-x-circle-fill"></i>
-                {{ session('error') }}
-            </div>
-        @endif
-        @if(session('info'))
-            <div class="alert alert-info d-flex align-items-center gap-2 mb-4 no-print" role="alert">
-                <i class="bi bi-info-circle-fill"></i>
-                {{ session('info') }}
-            </div>
-        @endif
+        <div id="spa-content">
+            {{-- Flash Messages --}}
+            @if(session('success'))
+                <div class="alert alert-success d-flex align-items-center gap-2 mb-4 no-print flash-msg" role="alert" data-flash="success">
+                    <i class="bi bi-check-circle-fill"></i>
+                    {{ session('success') }}
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="alert alert-danger d-flex align-items-center gap-2 mb-4 no-print flash-msg" role="alert" data-flash="error">
+                    <i class="bi bi-x-circle-fill"></i>
+                    {{ session('error') }}
+                </div>
+            @endif
+            @if(session('info'))
+                <div class="alert alert-info d-flex align-items-center gap-2 mb-4 no-print flash-msg" role="alert" data-flash="info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    {{ session('info') }}
+                </div>
+            @endif
 
-        @yield('content')
+            @yield('content')
+        </div>
     </main>
 </div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('show');
-        document.getElementById('sidebarOverlay').classList.toggle('show');
+/* ═══════════════════════════════════════════════════════
+   SIDEBAR TOGGLE
+   ═══════════════════════════════════════════════════════ */
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('show');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('show');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOPBAR SCROLL SHADOW
+   ═══════════════════════════════════════════════════════ */
+(function() {
+    const topbar = document.getElementById('topbar');
+    if (!topbar) return;
+    window.addEventListener('scroll', function() {
+        topbar.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   TOAST SYSTEM
+   ═══════════════════════════════════════════════════════ */
+const SiKunciToast = {
+    container: null,
+    init() {
+        this.container = document.getElementById('toastContainer');
+    },
+    show(message, type = 'success', duration = 4000) {
+        if (!this.container) this.init();
+        const icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', info: 'bi-info-circle-fill' };
+        const toast = document.createElement('div');
+        toast.className = `sikunci-toast toast-${type}`;
+        toast.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i><span>${message}</span>`;
+        toast.onclick = () => this.dismiss(toast);
+        this.container.appendChild(toast);
+        setTimeout(() => this.dismiss(toast), duration);
+    },
+    dismiss(el) {
+        el.classList.add('toast-out');
+        setTimeout(() => el.remove(), 300);
     }
-    function closeSidebar() {
-        document.getElementById('sidebar').classList.remove('show');
-        document.getElementById('sidebarOverlay').classList.remove('show');
-    }
+};
+SiKunciToast.init();
 
-    // ── Back button: handled server-side via @section('back-url') ──
+// Convert initial flash messages to toasts
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.flash-msg').forEach(el => {
+        const type = el.dataset.flash || 'info';
+        const msg = el.textContent.trim();
+        if (msg) SiKunciToast.show(msg, type);
+        el.remove();
+    });
+});
 
-    (function () {
-        const page = document.querySelector('[data-realtime-page]');
-        if (!page) return;
+/* ═══════════════════════════════════════════════════════
+   SPA NAVIGATION ENGINE
+   ═══════════════════════════════════════════════════════ */
+const SiKunciSPA = {
+    progressBar: null,
+    contentEl: null,
+    isNavigating: false,
+    currentUrl: window.location.href,
 
-        const interval = Number(page.dataset.realtimeInterval || 5000);
-        let inFlight = false;
+    init() {
+        this.progressBar = document.getElementById('spaProgressBar');
+        this.contentEl = document.getElementById('spa-content');
+        if (!this.contentEl) return;
 
-        function isUserInteracting() {
-            if (document.hidden || document.querySelector('.modal.show')) return true;
+        // Intercept link clicks
+        document.addEventListener('click', (e) => this.handleClick(e));
 
-            const active = document.activeElement;
-            if (!active || active === document.body) return false;
+        // Intercept form submissions
+        document.addEventListener('submit', (e) => this.handleFormSubmit(e));
 
-            return ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)
-                && Boolean(active.closest('[data-realtime-page]'));
-        }
-
-        async function refreshRealtimeRegions() {
-            if (inFlight || isUserInteracting()) return;
-
-            inFlight = true;
-            try {
-                const response = await fetch(window.location.href, {
-                    headers: {
-                        'Accept': 'text/html',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-SiKunci-Realtime': '1',
-                    },
-                    credentials: 'same-origin',
-                    cache: 'no-store',
-                });
-
-                const contentType = response.headers.get('content-type') || '';
-                if (!response.ok || !contentType.includes('text/html')) return; // finally will still reset inFlight
-
-                const html = await response.text();
-                const doc = new DOMParser().parseFromString(html, 'text/html');
-                const changedRegions = [];
-
-                doc.querySelectorAll('[data-realtime-region]').forEach((incoming) => {
-                    const key = incoming.dataset.realtimeRegion;
-                    const current = document.querySelector(`[data-realtime-region="${key}"]`);
-
-                    if (!current) return;
-
-                    const currentHtml = current.innerHTML.trim();
-                    const incomingHtml = incoming.innerHTML.trim();
-
-                    if (currentHtml !== incomingHtml) {
-                        current.replaceWith(document.importNode(incoming, true));
-                        changedRegions.push(key);
-                    }
-                });
-
-                if (changedRegions.length > 0) {
-                    window.dispatchEvent(new CustomEvent('sikunci:content-refreshed', {
-                        detail: { regions: changedRegions },
-                    }));
-                }
-            } catch (error) {
-                // Realtime refresh is optional; the next poll can try again.
-            } finally {
-                inFlight = false;
+        // Handle browser back/forward
+        window.addEventListener('popstate', (e) => {
+            if (e.state && e.state.spaUrl) {
+                this.navigate(e.state.spaUrl, false);
+            } else {
+                this.navigate(window.location.href, false);
             }
+        });
+
+        // Set initial state
+        history.replaceState({ spaUrl: window.location.href }, '', window.location.href);
+    },
+
+    shouldIntercept(el) {
+        // Don't intercept if:
+        if (!el) return false;
+        if (el.hasAttribute('data-no-spa')) return false;
+        if (el.closest('[data-no-spa]')) return false;
+        if (el.target === '_blank') return false;
+        if (el.hasAttribute('download')) return false;
+
+        const href = el.getAttribute('href');
+        if (!href) return false;
+        if (href.startsWith('#') || href.startsWith('javascript:')) return false;
+        if (href.startsWith('mailto:') || href.startsWith('tel:')) return false;
+
+        // Only same-origin
+        try {
+            const url = new URL(href, window.location.origin);
+            if (url.origin !== window.location.origin) return false;
+        } catch { return false; }
+
+        // Don't intercept logout
+        if (href.includes('/logout')) return false;
+
+        return true;
+    },
+
+    handleClick(e) {
+        const link = e.target.closest('a');
+        if (!link || !this.shouldIntercept(link)) return;
+
+        // Don't intercept if modifier key pressed
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+
+        e.preventDefault();
+        const href = link.getAttribute('href');
+        const url = new URL(href, window.location.origin);
+        this.navigate(url.href, true);
+    },
+
+    handleFormSubmit(e) {
+        const form = e.target;
+        if (!form || form.hasAttribute('data-no-spa')) return;
+        if (form.closest('[data-no-spa]')) return;
+
+        // Don't intercept logout forms
+        const action = form.getAttribute('action') || '';
+        if (action.includes('/logout')) return;
+
+        const method = (form.querySelector('input[name="_method"]')?.value || form.method || 'GET').toUpperCase();
+
+        // For GET forms (filters, search), navigate
+        if (method === 'GET') {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            const url = new URL(form.action || window.location.href);
+            url.search = params.toString();
+            this.navigate(url.href, true);
+            return;
         }
 
-        window.addEventListener('sikunci:refresh-now', refreshRealtimeRegions);
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) refreshRealtimeRegions();
+        // For POST/PUT/DELETE forms, submit via AJAX
+        e.preventDefault();
+        this.submitForm(form, method);
+    },
+
+    async submitForm(form, method) {
+        if (this.isNavigating) return;
+        this.isNavigating = true;
+        this.showProgress();
+
+        // Disable submit button
+        const submitBtn = form.querySelector('[type="submit"]');
+        let originalBtnHtml = '';
+        if (submitBtn) {
+            originalBtnHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Memproses...';
+        }
+
+        try {
+            const formData = new FormData(form);
+            const response = await fetch(form.action || window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html',
+                },
+                credentials: 'same-origin',
+                redirect: 'follow',
+            });
+
+            // Handle the response
+            const html = await response.text();
+
+            if (response.redirected) {
+                // Follow the redirect via SPA
+                this.processResponse(html, response.url, true);
+            } else if (response.ok) {
+                this.processResponse(html, response.url || window.location.href, true);
+            } else {
+                // On error, re-render content
+                this.processResponse(html, window.location.href, false);
+            }
+        } catch (error) {
+            console.error('SPA form submit error:', error);
+            // Fallback: submit normally
+            form.removeEventListener('submit', () => {});
+            form.submit();
+        } finally {
+            // Re-enable button
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+            }
+            this.isNavigating = false;
+        }
+    },
+
+    async navigate(url, pushState = true) {
+        if (this.isNavigating) return;
+        if (url === this.currentUrl && pushState) return;
+
+        this.isNavigating = true;
+        this.showProgress();
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html',
+                },
+                credentials: 'same-origin',
+            });
+
+            // If redirected to login, do full redirect
+            if (response.url.includes('/login')) {
+                window.location.href = response.url;
+                return;
+            }
+
+            const html = await response.text();
+            this.processResponse(html, response.url || url, pushState);
+
+        } catch (error) {
+            console.error('SPA navigation error:', error);
+            window.location.href = url;
+        } finally {
+            this.isNavigating = false;
+        }
+    },
+
+    processResponse(html, url, pushState) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+        // Extract content from #spa-content
+        const newContent = doc.querySelector('#spa-content');
+        if (!newContent) {
+            // Not a SPA-compatible page, do full navigation
+            window.location.href = url;
+            return;
+        }
+
+        // Extract page title
+        const newTitle = doc.querySelector('.topbar-title');
+        const pageTitle = doc.querySelector('title');
+
+        // Extract flash messages and show as toasts
+        const flashes = newContent.querySelectorAll('.flash-msg');
+        flashes.forEach(flash => {
+            const type = flash.dataset.flash || 'info';
+            const msg = flash.textContent.trim();
+            if (msg) SiKunciToast.show(msg, type);
+            flash.remove();
         });
-        setInterval(refreshRealtimeRegions, interval);
-    })();
+
+        // Animate out
+        this.contentEl.classList.add('spa-loading');
+
+        setTimeout(() => {
+            // Replace content
+            this.contentEl.innerHTML = newContent.innerHTML;
+
+            // Update title
+            if (newTitle) {
+                document.getElementById('topbarTitle').textContent = newTitle.textContent;
+            }
+            if (pageTitle) {
+                document.title = pageTitle.textContent;
+            }
+
+            // Update topbar back button
+            const newTopbar = doc.querySelector('.topbar');
+            const currentTopbarBtns = document.querySelector('.topbar .d-flex');
+            const newTopbarBtns = newTopbar?.querySelector('.d-flex');
+            if (currentTopbarBtns && newTopbarBtns) {
+                currentTopbarBtns.innerHTML = newTopbarBtns.innerHTML;
+            }
+
+            // Update sidebar active state
+            this.updateSidebarActive(url);
+
+            // Update URL
+            if (pushState) {
+                history.pushState({ spaUrl: url }, '', url);
+            }
+            this.currentUrl = url;
+
+            // Execute inline scripts
+            this.executeScripts(this.contentEl);
+
+            // Re-init Bootstrap components
+            this.reinitBootstrap();
+
+            // Animate in
+            requestAnimationFrame(() => {
+                this.contentEl.classList.remove('spa-loading');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            this.hideProgress();
+
+            // Close mobile sidebar
+            closeSidebar();
+
+            // Fire custom event
+            window.dispatchEvent(new CustomEvent('sikunci:page-loaded', { detail: { url } }));
+
+        }, 150); // Wait for fade-out
+    },
+
+    updateSidebarActive(url) {
+        const links = document.querySelectorAll('.sidebar .nav-link');
+        const urlPath = new URL(url).pathname;
+
+        links.forEach(link => {
+            const linkPath = new URL(link.href).pathname;
+            link.classList.remove('active');
+
+            // Exact match or prefix match
+            if (linkPath === urlPath || (linkPath !== '/' && urlPath.startsWith(linkPath))) {
+                link.classList.add('active');
+            }
+        });
+    },
+
+    executeScripts(container) {
+        const scripts = container.querySelectorAll('script');
+        scripts.forEach(oldScript => {
+            const newScript = document.createElement('script');
+            if (oldScript.src) {
+                newScript.src = oldScript.src;
+            } else {
+                newScript.textContent = oldScript.textContent;
+            }
+            oldScript.replaceWith(newScript);
+        });
+    },
+
+    reinitBootstrap() {
+        // Re-init tooltips
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            new bootstrap.Tooltip(el);
+        });
+        // Re-init modals
+        document.querySelectorAll('.modal').forEach(el => {
+            if (!bootstrap.Modal.getInstance(el)) {
+                new bootstrap.Modal(el);
+            }
+        });
+    },
+
+    showProgress() {
+        this.progressBar.className = 'spa-progress-bar active';
+    },
+    hideProgress() {
+        this.progressBar.className = 'spa-progress-bar done';
+        setTimeout(() => {
+            this.progressBar.className = 'spa-progress-bar';
+        }, 600);
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => SiKunciSPA.init());
+
+/* ═══════════════════════════════════════════════════════
+   REALTIME POLLING (preserved from original)
+   ═══════════════════════════════════════════════════════ */
+function initRealtimePolling() {
+    const page = document.querySelector('[data-realtime-page]');
+    if (!page) return;
+
+    const interval = Number(page.dataset.realtimeInterval || 5000);
+    let inFlight = false;
+
+    function isUserInteracting() {
+        if (document.hidden || document.querySelector('.modal.show')) return true;
+        const active = document.activeElement;
+        if (!active || active === document.body) return false;
+        return ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)
+            && Boolean(active.closest('[data-realtime-page]'));
+    }
+
+    async function refreshRealtimeRegions() {
+        if (inFlight || isUserInteracting()) return;
+        inFlight = true;
+        try {
+            const response = await fetch(window.location.href, {
+                headers: {
+                    'Accept': 'text/html',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-SiKunci-Realtime': '1',
+                },
+                credentials: 'same-origin',
+                cache: 'no-store',
+            });
+            const contentType = response.headers.get('content-type') || '';
+            if (!response.ok || !contentType.includes('text/html')) return;
+            const html = await response.text();
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const changedRegions = [];
+            doc.querySelectorAll('[data-realtime-region]').forEach((incoming) => {
+                const key = incoming.dataset.realtimeRegion;
+                const current = document.querySelector(`[data-realtime-region="${key}"]`);
+                if (!current) return;
+                const currentHtml = current.innerHTML.trim();
+                const incomingHtml = incoming.innerHTML.trim();
+                if (currentHtml !== incomingHtml) {
+                    current.replaceWith(document.importNode(incoming, true));
+                    changedRegions.push(key);
+                }
+            });
+            if (changedRegions.length > 0) {
+                window.dispatchEvent(new CustomEvent('sikunci:content-refreshed', {
+                    detail: { regions: changedRegions },
+                }));
+            }
+        } catch (error) { /* silent */ } finally { inFlight = false; }
+    }
+
+    window.addEventListener('sikunci:refresh-now', refreshRealtimeRegions);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) refreshRealtimeRegions();
+    });
+    const timerId = setInterval(refreshRealtimeRegions, interval);
+
+    // Store timer ID so we can clear on SPA navigation
+    page.dataset.realtimeTimerId = timerId;
+}
+
+// Init realtime on load
+initRealtimePolling();
+
+// Re-init realtime after SPA navigation
+window.addEventListener('sikunci:page-loaded', () => {
+    // Clear old timers
+    document.querySelectorAll('[data-realtime-timer-id]').forEach(el => {
+        clearInterval(Number(el.dataset.realtimeTimerId));
+    });
+    initRealtimePolling();
+});
 </script>
 @stack('scripts')
 </body>

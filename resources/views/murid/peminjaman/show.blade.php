@@ -10,7 +10,7 @@
 <div class="row g-4">
     <div class="col-lg-5">
         {{-- Info Card --}}
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up">
             <div class="card-header"><i class="bi bi-info-circle text-primary me-2"></i>Informasi Peminjaman</div>
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
@@ -41,7 +41,7 @@
 
         {{-- Penyerahan Kunci --}}
         @if($peminjaman->penyerahanKunci)
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-1">
             <div class="card-header"><i class="bi bi-key-fill text-warning me-2"></i>Informasi Kunci</div>
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
@@ -66,7 +66,7 @@
 
         {{-- Pelanggaran --}}
         @if($peminjaman->pelanggaran->count() > 0)
-        <div class="card">
+        <div class="card fade-in-up delay-2">
             <div class="card-header"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Pelanggaran</div>
             <div class="card-body p-0">
                 @foreach($peminjaman->pelanggaran as $p)
@@ -85,7 +85,7 @@
 
     <div class="col-lg-7">
         {{-- Progress Timeline --}}
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-1">
             <div class="card-header"><i class="bi bi-diagram-3 text-primary me-2"></i>Status Peminjaman</div>
             <div class="card-body py-4">
                 @php
@@ -116,7 +116,7 @@
 
         {{-- Action Button --}}
         @if($peminjaman->status === 'berlangsung')
-        <div class="alert alert-primary d-flex gap-3 align-items-center mb-4">
+        <div class="alert alert-primary d-flex gap-3 align-items-center mb-4 fade-in-up delay-2">
             <i class="bi bi-clipboard-check fs-3"></i>
             <div class="flex-grow-1">
                 <div class="fw-bold">Lab sedang Anda gunakan</div>
@@ -130,7 +130,7 @@
 
         {{-- Checklist Detail --}}
         @if($peminjaman->checklistPengembalian)
-        <div class="card">
+        <div class="card fade-in-up delay-3">
             <div class="card-header"><i class="bi bi-clipboard-check-fill text-success me-2"></i>Checklist Pengembalian</div>
             <div class="card-body">
                 @php $cl = $peminjaman->checklistPengembalian; @endphp
@@ -169,7 +169,7 @@
     </div>
 </div>
 
-<div class="mt-3">
+<div class="mt-3 fade-in-up delay-3">
     <a href="{{ route('murid.peminjaman.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
 </div>
 </div>

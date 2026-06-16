@@ -6,7 +6,7 @@
 @section('content')
 <div class="row justify-content-center">
 <div class="col-lg-7">
-<div class="card">
+<div class="card fade-in-up">
     <div class="card-header"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Form Catat Pelanggaran</div>
     <div class="card-body p-4">
         @if($errors->any())

@@ -3,7 +3,7 @@
 @section('page-title', 'Laporan Pelanggaran')
 
 @section('content')
-<div class="card mb-4 no-print">
+<div class="card mb-4 no-print fade-in-up delay-1">
     <div class="card-body">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-3">
@@ -34,42 +34,49 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card fade-in-up delay-2">
     <div class="card-header"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Laporan Pelanggaran ({{ $pelanggaran->total() }} data)</div>
-    <div class="table-responsive">
-        <table class="table table-hover table-sm mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>No</th>
-                    <th>Murid</th>
-                    <th>Lab</th>
-                    <th>Tipe</th>
-                    <th>Poin</th>
-                    <th>Keterangan</th>
-                    <th>Dicatat Oleh</th>
-                    <th>Tanggal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($pelanggaran as $i => $p)
-                <tr>
-                    <td>{{ $pelanggaran->firstItem() + $i }}</td>
-                    <td>
-                        <div class="fw-semibold small">{{ $p->murid->name }}</div>
-                        <div class="text-muted" style="font-size:.73rem">{{ $p->murid->kelas }}</div>
-                    </td>
-                    <td class="small">{{ optional($p->peminjaman?->lab)->nama ?? '—' }}</td>
-                    <td><span class="badge bg-warning text-dark">{{ \App\Models\Pelanggaran::tipeLabel($p->tipe) }}</span></td>
-                    <td><span class="badge bg-danger">+{{ $p->poin }}</span></td>
-                    <td class="small">{{ Str::limit($p->keterangan, 50) }}</td>
-                    <td class="small">{{ $p->dicatatOleh->name }}</td>
-                    <td class="small">{{ $p->created_at->format('d/m/Y') }}</td>
-                </tr>
-                @empty
-                <tr><td colspan="8" class="text-center text-muted py-4">Tidak ada data pelanggaran.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+    <div class="card-body p-0">
+        @if($pelanggaran->count() > 0)
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>No</th>
+                        <th>Murid</th>
+                        <th>Lab</th>
+                        <th>Tipe</th>
+                        <th>Poin</th>
+                        <th>Keterangan</th>
+                        <th>Dicatat Oleh</th>
+                        <th>Tanggal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($pelanggaran as $i => $p)
+                    <tr>
+                        <td>{{ $pelanggaran->firstItem() + $i }}</td>
+                        <td>
+                            <div class="fw-semibold small">{{ $p->murid->name }}</div>
+                            <div class="text-muted" style="font-size:.73rem">{{ $p->murid->kelas }}</div>
+                        </td>
+                        <td class="small">{{ optional($p->peminjaman?->lab)->nama ?? '—' }}</td>
+                        <td><span class="badge bg-warning text-dark">{{ \App\Models\Pelanggaran::tipeLabel($p->tipe) }}</span></td>
+                        <td><span class="badge bg-danger">+{{ $p->poin }}</span></td>
+                        <td class="small">{{ Str::limit($p->keterangan, 50) }}</td>
+                        <td class="small">{{ $p->dicatatOleh->name }}</td>
+                        <td class="small">{{ $p->created_at->format('d/m/Y') }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div class="empty-state">
+            <i class="bi bi-shield-check"></i>
+            <p>Tidak ada data pelanggaran.</p>
+        </div>
+        @endif
     </div>
     @if($pelanggaran->hasPages())
     <div class="card-footer">{{ $pelanggaran->withQueryString()->links() }}</div>

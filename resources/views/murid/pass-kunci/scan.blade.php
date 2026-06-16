@@ -171,7 +171,7 @@
     {{-- ── Scanner Column ── --}}
     <div class="col-lg-6">
 
-        <div class="card scan-card border-0">
+        <div class="card scan-card border-0 fade-in-up">
             {{-- Header --}}
             <div class="card-header d-flex align-items-center gap-2">
                 <i class="bi bi-camera-fill"></i>
@@ -240,7 +240,7 @@
             </div>
         </div>
 
-        <div class="mt-3">
+        <div class="mt-3 fade-in-up delay-1">
             <a href="{{ route('murid.dashboard') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i>Kembali ke Dashboard
             </a>
@@ -249,7 +249,7 @@
 
     {{-- ── How-to Column ── --}}
     <div class="col-lg-4">
-        <div class="card">
+        <div class="card fade-in-up delay-1">
             <div class="card-header">
                 <i class="bi bi-info-circle text-primary me-2"></i>Cara Ambil Kunci
             </div>
@@ -275,7 +275,7 @@
             </div>
         </div>
 
-        <div class="card mt-3 border-0" style="background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border:1px solid #FED7AA !important">
+        <div class="card mt-3 border-0 fade-in-up delay-2" style="background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border:1px solid #FED7AA !important">
             <div class="card-body py-3">
                 <div class="d-flex align-items-start gap-2">
                     <i class="bi bi-clock-history text-orange fs-5 mt-1" style="color:#EA580C"></i>

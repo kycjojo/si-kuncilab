@@ -207,7 +207,7 @@
     <div class="col-lg-6">
 
         {{-- QR Hero Card --}}
-        <div class="qr-hero mb-4">
+        <div class="qr-hero mb-4 fade-in-up">
             <div class="qr-title"><i class="bi bi-qr-code me-2"></i>QR Code Pass Kunci</div>
             <div class="qr-subtitle">Tunjukkan layar ini ke penerima kunci</div>
 
@@ -249,7 +249,7 @@
         </div>
 
         {{-- Info Strip --}}
-        <div class="info-strip mb-4">
+        <div class="info-strip mb-4 fade-in-up delay-1">
             <div class="strip-item">
                 <div class="strip-label">Lab</div>
                 <div class="strip-val">{{ $peminjaman->lab->nama }}</div>
@@ -269,7 +269,7 @@
         </div>
 
         {{-- Actions --}}
-        <div class="d-flex gap-2 mb-4">
+        <div class="d-flex gap-2 mb-4 fade-in-up delay-2">
             <button class="btn btn-outline-primary btn-sm flex-fill" id="btn-refresh-qr">
                 <i class="bi bi-arrow-clockwise me-1"></i>Generate Ulang
             </button>
@@ -282,7 +282,7 @@
 
     {{-- ── Right / Steps Column ── --}}
     <div class="col-lg-4">
-        <div class="card">
+        <div class="card fade-in-up delay-1">
             <div class="card-header">
                 <i class="bi bi-list-ol text-primary me-2"></i>Cara Pass Kunci
             </div>
@@ -308,7 +308,7 @@
             </div>
         </div>
 
-        <div class="card mt-3 border-warning border-2">
+        <div class="card mt-3 border-warning border-2 fade-in-up delay-2">
             <div class="card-body py-3 px-3">
                 <div class="d-flex align-items-start gap-2">
                     <i class="bi bi-shield-exclamation text-warning fs-5 mt-1"></i>

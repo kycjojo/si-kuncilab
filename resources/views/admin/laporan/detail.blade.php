@@ -9,7 +9,7 @@
     {{-- Kolom Kiri: Info Peminjaman --}}
     <div class="col-lg-5">
         {{-- Info Murid --}}
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-1">
             <div class="card-header"><i class="bi bi-person-fill text-primary me-2"></i>Data Murid</div>
             <div class="card-body">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -30,7 +30,7 @@
         </div>
 
         {{-- Info Peminjaman --}}
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-2">
             <div class="card-header"><i class="bi bi-info-circle text-primary me-2"></i>Informasi Peminjaman</div>
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
@@ -66,7 +66,7 @@
 
         {{-- Penyerahan Kunci --}}
         @if($peminjaman->penyerahanKunci)
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-3">
             <div class="card-header"><i class="bi bi-key-fill text-warning me-2"></i>Info Penyerahan Kunci</div>
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
@@ -91,7 +91,7 @@
 
         {{-- Pelanggaran --}}
         @if($peminjaman->pelanggaran->count() > 0)
-        <div class="card">
+        <div class="card fade-in-up delay-4">
             <div class="card-header"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Pelanggaran ({{ $peminjaman->pelanggaran->count() }})</div>
             <div class="card-body p-0">
                 @foreach($peminjaman->pelanggaran as $p)
@@ -115,7 +115,7 @@
         @php $cl = $peminjaman->checklistPengembalian; @endphp
 
         {{-- Foto Kondisi Lab --}}
-        <div class="card mb-4 border-primary border-2">
+        <div class="card mb-4 border-primary border-2 fade-in-up delay-2">
             <div class="card-header bg-primary text-white">
                 <i class="bi bi-camera-fill me-2"></i>Foto Kondisi Lab — {{ $peminjaman->lab->nama }}
             </div>
@@ -130,16 +130,16 @@
                     <span class="text-muted small"><i class="bi bi-zoom-in me-1"></i>Klik foto untuk memperbesar</span>
                 </div>
                 @else
-                <div class="text-center text-muted py-4">
-                    <i class="bi bi-image fs-1 d-block mb-2"></i>
-                    <span>Tidak ada foto yang diupload</span>
+                <div class="empty-state">
+                    <i class="bi bi-image"></i>
+                    <p>Tidak ada foto yang diupload</p>
                 </div>
                 @endif
             </div>
         </div>
 
         {{-- Checklist Kondisi --}}
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-3">
             <div class="card-header"><i class="bi bi-clipboard-check-fill text-success me-2"></i>Checklist Kondisi Ruangan</div>
             <div class="card-body">
                 <div class="row g-2 mb-3">
@@ -197,18 +197,20 @@
         </div>
 
         @else
-        <div class="card">
+        <div class="card fade-in-up delay-2">
             <div class="card-body text-center py-5">
-                <i class="bi bi-clipboard-x text-muted fs-1 d-block mb-3"></i>
-                <div class="fw-bold fs-5 text-muted">Belum Ada Checklist</div>
-                <div class="text-muted small">Murid belum mengisi checklist pengembalian.</div>
+                <div class="empty-state">
+                    <i class="bi bi-clipboard-x"></i>
+                    <p>Belum Ada Checklist</p>
+                    <small class="text-muted">Murid belum mengisi checklist pengembalian.</small>
+                </div>
             </div>
         </div>
         @endif
     </div>
 </div>
 
-<div class="mt-4 d-flex gap-2 no-print">
+<div class="mt-4 d-flex gap-2 no-print fade-in-up delay-4">
     <a href="{{ route('admin.laporan.peminjaman') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali ke Laporan</a>
     <a href="{{ route('admin.users.show', $peminjaman->murid) }}" class="btn btn-outline-primary"><i class="bi bi-person me-1"></i>Profil Murid</a>
 </div>

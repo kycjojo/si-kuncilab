@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="row justify-content-center">
-<div class="col-lg-6">
+<div class="col-lg-6 fade-in-up delay-1">
 <div class="card">
     <div class="card-header"><i class="bi bi-pencil-fill text-primary me-2"></i>Edit Lab — {{ $lab->nama }}</div>
     <div class="card-body p-4">

@@ -11,7 +11,7 @@
     {{-- Kolom Kiri: Info Peminjaman --}}
     <div class="col-lg-5">
         {{-- Info Peminjaman --}}
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-1">
             <div class="card-header"><i class="bi bi-info-circle text-primary me-2"></i>Informasi Peminjaman</div>
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
@@ -49,7 +49,7 @@
 
         {{-- Info Penyerahan Kunci --}}
         @if($peminjaman->penyerahanKunci)
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-2">
             <div class="card-header"><i class="bi bi-key-fill text-warning me-2"></i>Info Penyerahan Kunci</div>
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
@@ -65,7 +65,7 @@
                     @endif
                     <tr><td class="text-muted small">Waktu Serah</td><td>{{ $peminjaman->penyerahanKunci->waktu_serah?->format('H:i, d/m/Y') ?? '—' }}</td></tr>
                     @unless($passKunciKeluar)
-                    <tr><td class="text-muted small">Waktu Kembali</td><td>{{ $peminjaman->penyerahanKunci->waktu_terima_kembali?->format('H:i, d/m/Y') ?? '<span class="badge bg-warning text-dark">Belum dikembalikan</span>' }}</td></tr>
+                    <tr><td class="text-muted small">Waktu Kembali</td><td>{!! $peminjaman->penyerahanKunci->waktu_terima_kembali?->format('H:i, d/m/Y') ?? '<span class="badge bg-warning text-dark">Belum dikembalikan</span>' !!}</td></tr>
                     @endunless
                 </table>
             </div>
@@ -74,7 +74,7 @@
 
         {{-- Transfer Log (Pass Kunci Langsung) --}}
         @if(isset($transferLogs) && $transferLogs->count() > 0)
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-3">
             <div class="card-header d-flex align-items-center gap-2">
                 <i class="bi bi-arrow-left-right text-info"></i>
                 <span>Log Pass Kunci Langsung</span>
@@ -118,7 +118,7 @@
 
         {{-- Tombol Aksi --}}
         @if($peminjaman->status === 'checklist_diisi')
-        <div class="card border-success border-2">
+        <div class="card border-success border-2 fade-in-up delay-4">
             <div class="card-body text-center p-4">
                 <i class="bi bi-key-fill text-success fs-1 mb-2 d-block"></i>
                 <div class="fw-bold fs-5 mb-1">Terima Kunci?</div>
@@ -136,7 +136,7 @@
 
         {{-- Pelanggaran --}}
         @if($peminjaman->pelanggaran->count() > 0)
-        <div class="card mt-4">
+        <div class="card mt-4 fade-in-up delay-5">
             <div class="card-header"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Pelanggaran</div>
             <div class="card-body p-0">
                 @foreach($peminjaman->pelanggaran as $p)
@@ -160,7 +160,7 @@
         @php $cl = $peminjaman->checklistPengembalian; @endphp
 
         {{-- Foto Kondisi Lab --}}
-        <div class="card mb-4 border-primary border-2">
+        <div class="card mb-4 border-primary border-2 fade-in-up delay-2">
             <div class="card-header bg-primary text-white">
                 <i class="bi bi-camera-fill me-2"></i>Foto Kondisi Lab dari Murid
             </div>
@@ -175,16 +175,16 @@
                     <span class="text-muted small"><i class="bi bi-zoom-in me-1"></i>Klik foto untuk memperbesar</span>
                 </div>
                 @else
-                <div class="text-center text-muted py-4">
-                    <i class="bi bi-image fs-1 d-block mb-2"></i>
-                    <span>Murid tidak mengupload foto</span>
+                <div class="empty-state">
+                    <i class="bi bi-image"></i>
+                    <p>Murid tidak mengupload foto</p>
                 </div>
                 @endif
             </div>
         </div>
 
         {{-- Checklist Kondisi --}}
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-3">
             <div class="card-header"><i class="bi bi-clipboard-check-fill text-success me-2"></i>Checklist Kondisi Ruangan</div>
             <div class="card-body">
                 <div class="row g-2 mb-3">
@@ -249,7 +249,7 @@
 
         @else
         {{-- Belum ada checklist --}}
-        <div class="card">
+        <div class="card fade-in-up delay-2">
             <div class="card-body text-center py-5">
                 <i class="bi bi-clipboard-x text-muted fs-1 d-block mb-3"></i>
                 <div class="fw-bold fs-5 text-muted">Belum Ada Checklist</div>
@@ -263,7 +263,7 @@
     </div>
 </div>
 
-<div class="mt-4">
+<div class="mt-4 fade-in-up delay-5">
     <a href="{{ route('pengawas.kunci.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali ke Daftar Kunci</a>
     <a href="{{ route('pengawas.dashboard') }}" class="btn btn-outline-primary ms-2"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
 </div>

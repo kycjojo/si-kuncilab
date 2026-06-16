@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="row g-4">
-    <div class="col-lg-4">
+    <div class="col-lg-4 fade-in-up delay-1">
         <div class="card">
             <div class="card-body text-center p-4">
                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
@@ -62,57 +62,71 @@
 
     <div class="col-lg-8">
         {{-- Riwayat Peminjaman --}}
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-2">
             <div class="card-header"><i class="bi bi-clock-history text-primary me-2"></i>Riwayat Peminjaman</div>
-            <div class="table-responsive">
-                <table class="table table-sm mb-0">
-                    <thead class="table-light">
-                        <tr><th>Lab</th><th>Tanggal</th><th>Status</th></tr>
-                    </thead>
-                    <tbody>
-                        @forelse($peminjaman as $pm)
-                        <tr>
-                            <td>{{ $pm->lab->nama }}</td>
-                            <td class="small">{{ $pm->tanggal_pinjam->format('d/m/Y') }}</td>
-                            <td><span class="badge bg-{{ $pm->statusBadgeForDisplay() }}">{{ $pm->statusLabelForDisplay() }}</span></td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="3" class="text-center text-muted py-3">Belum ada peminjaman</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="card-body p-0">
+                @if($peminjaman->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Lab</th><th>Tanggal</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach($peminjaman as $pm)
+                            <tr>
+                                <td>{{ $pm->lab->nama }}</td>
+                                <td class="small">{{ $pm->tanggal_pinjam->format('d/m/Y') }}</td>
+                                <td><span class="badge bg-{{ $pm->statusBadgeForDisplay() }}">{{ $pm->statusLabelForDisplay() }}</span></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>Belum ada peminjaman</p>
+                </div>
+                @endif
             </div>
         </div>
 
         {{-- Riwayat Pelanggaran --}}
         @if($user->role === 'murid')
-        <div class="card">
+        <div class="card fade-in-up delay-3">
             <div class="card-header"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Riwayat Pelanggaran</div>
-            <div class="table-responsive">
-                <table class="table table-sm mb-0">
-                    <thead class="table-light">
-                        <tr><th>Tipe</th><th>Poin</th><th>Keterangan</th><th>Dicatat Oleh</th><th>Tanggal</th></tr>
-                    </thead>
-                    <tbody>
-                        @forelse($pelanggaran as $pl)
-                        <tr>
-                            <td><span class="badge bg-warning text-dark">{{ \App\Models\Pelanggaran::tipeLabel($pl->tipe) }}</span></td>
-                            <td><span class="badge bg-danger">+{{ $pl->poin }}</span></td>
-                            <td class="small">{{ $pl->keterangan }}</td>
-                            <td class="small">{{ $pl->dicatatOleh->name }}</td>
-                            <td class="small">{{ $pl->created_at->format('d/m/Y') }}</td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="5" class="text-center text-muted py-3">Belum ada pelanggaran</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="card-body p-0">
+                @if($pelanggaran->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Tipe</th><th>Poin</th><th>Keterangan</th><th>Dicatat Oleh</th><th>Tanggal</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach($pelanggaran as $pl)
+                            <tr>
+                                <td><span class="badge bg-warning text-dark">{{ \App\Models\Pelanggaran::tipeLabel($pl->tipe) }}</span></td>
+                                <td><span class="badge bg-danger">+{{ $pl->poin }}</span></td>
+                                <td class="small">{{ $pl->keterangan }}</td>
+                                <td class="small">{{ $pl->dicatatOleh->name }}</td>
+                                <td class="small">{{ $pl->created_at->format('d/m/Y') }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="empty-state">
+                    <i class="bi bi-shield-check"></i>
+                    <p>Belum ada pelanggaran</p>
+                </div>
+                @endif
             </div>
         </div>
         @endif
     </div>
 </div>
-<div class="mt-3">
+<div class="mt-3 fade-in-up delay-3">
     <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
 </div>
 @endsection

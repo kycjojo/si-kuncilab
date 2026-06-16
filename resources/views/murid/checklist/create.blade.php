@@ -5,7 +5,7 @@
 
 @section('content')
 {{-- Header Info --}}
-<div class="alert alert-primary d-flex gap-3 align-items-center mb-4">
+<div class="alert alert-primary d-flex gap-3 align-items-center mb-4 fade-in-up">
     <i class="bi bi-key-fill fs-2"></i>
     <div>
         <div class="fw-bold fs-5">{{ $peminjaman->lab->nama }}</div>
@@ -17,16 +17,16 @@
     </div>
 </div>
 
-<div class="alert alert-warning py-2 mb-4">
+<div class="alert alert-warning py-2 mb-4 fade-in-up delay-1">
     <i class="bi bi-exclamation-triangle me-2"></i>
     <strong>Penting:</strong> Isi checklist dengan jujur. Setelah submit, segera kembalikan kunci ke pengawas.
 </div>
 
-<form action="{{ route('murid.checklist.store', $peminjaman) }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('murid.checklist.store', $peminjaman) }}" method="POST" enctype="multipart/form-data" data-no-spa="true">
 @csrf
 <div class="row g-4">
     <div class="col-lg-7">
-        <div class="card">
+        <div class="card fade-in-up delay-1">
             <div class="card-header fw-semibold"><i class="bi bi-clipboard-check text-primary me-2"></i>Kondisi Ruangan</div>
             <div class="card-body">
                 @foreach([
@@ -72,7 +72,7 @@
     </div>
 
     <div class="col-lg-5">
-        <div class="card">
+        <div class="card fade-in-up delay-2">
             <div class="card-header fw-semibold"><i class="bi bi-camera-fill text-primary me-2"></i>Foto Kondisi Ruangan</div>
             <div class="card-body">
                 <div class="mb-3">
@@ -93,7 +93,7 @@
             </div>
         </div>
 
-        <div class="card mt-4 border-danger">
+        <div class="card mt-4 border-danger fade-in-up delay-3">
             <div class="card-body text-center p-4">
                 <i class="bi bi-exclamation-circle-fill text-danger fs-2 mb-2 d-block"></i>
                 <div class="fw-bold mb-1">Setelah Submit</div>

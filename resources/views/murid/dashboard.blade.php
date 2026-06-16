@@ -9,7 +9,7 @@
 
 {{-- Blokir Warning --}}
 @if($user->is_blocked)
-<div class="row g-4">
+<div class="row g-4 fade-in-up">
     <div class="col-lg-8">
         <div class="alert alert-danger d-flex gap-3 align-items-center mb-0" role="alert">
             <i class="bi bi-lock-fill fs-3"></i>
@@ -33,12 +33,12 @@
 {{-- Poin Alert --}}
 @if(!$user->is_blocked)
     @if($user->poin_pelanggaran >= 4)
-    <div class="alert alert-danger py-2 mb-4">
+    <div class="alert alert-danger py-2 mb-4 fade-in-up">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <strong>Peringatan!</strong> Poin pelanggaran Anda sudah <strong>{{ $user->poin_pelanggaran }}/5</strong>. Jika mencapai 5, akun akan diblokir!
     </div>
     @elseif($user->poin_pelanggaran >= 2)
-    <div class="alert alert-warning py-2 mb-4">
+    <div class="alert alert-warning py-2 mb-4 fade-in-up">
         <i class="bi bi-exclamation-circle me-2"></i>
         Poin pelanggaran Anda: <strong>{{ $user->poin_pelanggaran }}/5</strong>. Harap menjaga ketertiban.
     </div>
@@ -52,7 +52,7 @@
     <div class="col-lg-7">
 
         {{-- Selamat Datang --}}
-        <div class="card p-4 mb-4" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff">
+        <div class="card p-4 mb-4 fade-in-up" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="fw-bold fs-5">Selamat Datang!</div>
@@ -81,7 +81,7 @@
 
         {{-- Quick Borrow (tidak ada peminjaman aktif) --}}
         @if(!$user->is_blocked && !$peminjaman_aktif)
-        <div class="card mb-4">
+        <div class="card mb-4 fade-in-up delay-1">
             <div class="card-header d-flex align-items-center gap-2">
                 <i class="bi bi-lightning-fill text-warning"></i>
                 <span>Quick Borrow</span>
@@ -148,25 +148,25 @@
         {{-- Stat cards grid --}}
         <div class="row g-3 mb-4">
             <div class="col-6">
-                <div class="card text-center p-3 h-100">
+                <div class="card text-center p-3 h-100 fade-in-up delay-1">
                     <div class="fs-3 fw-bold text-primary">{{ $stats['total_peminjaman'] }}</div>
                     <div class="text-muted" style="font-size:.75rem">Total Peminjaman</div>
                 </div>
             </div>
             <div class="col-6">
-                <div class="card text-center p-3 h-100">
+                <div class="card text-center p-3 h-100 fade-in-up delay-2">
                     <div class="fs-3 fw-bold text-success">{{ $stats['selesai'] }}</div>
                     <div class="text-muted" style="font-size:.75rem">Selesai</div>
                 </div>
             </div>
             <div class="col-6">
-                <div class="card text-center p-3 h-100">
+                <div class="card text-center p-3 h-100 fade-in-up delay-3">
                     <div class="fs-3 fw-bold text-danger">{{ $stats['terlambat'] }}</div>
                     <div class="text-muted" style="font-size:.75rem">Terlambat</div>
                 </div>
             </div>
             <div class="col-6">
-                <div class="card text-center p-3 h-100">
+                <div class="card text-center p-3 h-100 fade-in-up delay-4">
                     <div class="fs-3 fw-bold {{ $user->poin_pelanggaran >= 4 ? 'text-danger' : 'text-secondary' }}">
                         {{ $stats['poin_pelanggaran'] }}
                     </div>
@@ -177,7 +177,7 @@
 
         {{-- Active Peminjaman card (when user has one) --}}
         @if($peminjaman_aktif)
-        <div class="card border-primary border-2 mb-4">
+        <div class="card border-primary border-2 mb-4 fade-in-up delay-2">
             <div class="card-header bg-primary text-white py-2">
                 <i class="bi bi-clock-fill me-2"></i>Peminjaman Aktif
             </div>
@@ -226,7 +226,7 @@
         </div>
         @elseif(!$user->is_blocked)
         {{-- Empty state (no active peminjaman) --}}
-        <div class="card mb-4" style="border:2px dashed #CBD5E1;box-shadow:none">
+        <div class="card mb-4 fade-in-up delay-2" style="border:2px dashed #CBD5E1;box-shadow:none">
             <div class="card-body text-center py-4">
                 <i class="bi bi-calendar-plus text-muted fs-1 mb-2 d-block"></i>
                 <div class="text-muted mb-3 small">Tidak ada peminjaman aktif.</div>
@@ -243,7 +243,7 @@
         @endif
 
         {{-- Riwayat Terbaru (always visible) --}}
-        <div class="card">
+        <div class="card fade-in-up delay-3">
             <div class="card-header d-flex justify-content-between align-items-center py-2">
                 <span style="font-size:.85rem"><i class="bi bi-clock-history text-primary me-1"></i>Riwayat Terbaru</span>
                 @if($riwayat_terbaru->count() > 0)
@@ -251,25 +251,29 @@
                 @endif
             </div>
             @if($riwayat_terbaru->count() > 0)
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light"><tr><th>Lab</th><th>Tanggal</th><th>Status</th><th></th></tr></thead>
-                    <tbody>
-                        @foreach($riwayat_terbaru as $pm)
-                        <tr>
-                            <td class="fw-semibold" style="font-size:.8rem">{{ $pm->lab->nama }}</td>
-                            <td style="font-size:.75rem">{{ $pm->tanggal_pinjam->format('d/m/Y') }}</td>
-                            <td><span class="badge bg-{{ $pm->statusBadgeForDisplay() }}" style="font-size:.65rem">{{ $pm->statusLabelForDisplay() }}</span></td>
-                            <td><a href="{{ route('murid.peminjaman.show', $pm) }}" class="btn btn-xs btn-outline-secondary" style="font-size:.65rem;padding:1px 6px"><i class="bi bi-eye"></i></a></td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th>Lab</th><th>Tanggal</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach($riwayat_terbaru as $pm)
+                            <tr>
+                                <td class="fw-semibold" style="font-size:.8rem">{{ $pm->lab->nama }}</td>
+                                <td style="font-size:.75rem">{{ $pm->tanggal_pinjam->format('d/m/Y') }}</td>
+                                <td><span class="badge bg-{{ $pm->statusBadgeForDisplay() }}" style="font-size:.65rem">{{ $pm->statusLabelForDisplay() }}</span></td>
+                                <td><a href="{{ route('murid.peminjaman.show', $pm) }}" class="btn btn-xs btn-outline-secondary" style="font-size:.65rem;padding:1px 6px"><i class="bi bi-eye"></i></a></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
             @else
-            <div class="card-body text-center py-3">
-                <i class="bi bi-inbox text-muted d-block mb-1" style="font-size:1.5rem"></i>
-                <span class="text-muted" style="font-size:.8rem">Belum ada riwayat peminjaman.</span>
+            <div class="card-body p-0">
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>Belum ada riwayat peminjaman.</p>
+                </div>
             </div>
             @endif
         </div>
