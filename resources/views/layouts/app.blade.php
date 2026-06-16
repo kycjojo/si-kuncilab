@@ -465,9 +465,14 @@
 
     <!-- Topbar -->
     <header class="topbar">
-        <button class="btn btn-sm btn-light sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn">
-            <i class="bi bi-list fs-5"></i>
-        </button>
+        <div class="d-flex align-items-center gap-1">
+            <button class="btn btn-sm btn-light sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <button class="btn btn-sm btn-light" onclick="window.history.back()" id="back-btn" title="Kembali">
+                <i class="bi bi-arrow-left fs-5"></i>
+            </button>
+        </div>
         <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
         <div class="d-flex align-items-center gap-2">
             <span class="text-muted small d-none d-md-inline">
