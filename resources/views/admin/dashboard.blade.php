@@ -3,6 +3,8 @@
 @section('page-title', 'Dashboard Admin')
 
 @section('content')
+<div data-realtime-page data-realtime-interval="5000">
+<div data-realtime-region="admin-dashboard">
 {{-- Stat Cards Row 1 --}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-xl-3 fade-in-up delay-1">
@@ -196,3 +198,6 @@ new Chart(ctx, {
 });
 </script>
 @endpush
+
+</div>{{-- end realtime-region --}}
+</div>{{-- end realtime-page --}}

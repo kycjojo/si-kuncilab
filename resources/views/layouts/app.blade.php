@@ -233,6 +233,7 @@ const SiKunciToast = {
         setTimeout(() => this.dismiss(toast), duration);
     },
     dismiss(el) {
+        if (!el || !el.parentNode) return;
         el.classList.add('toast-out');
         setTimeout(() => el.remove(), 300);
     }
@@ -250,6 +251,39 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /* ═══════════════════════════════════════════════════════
+   CSRF TOKEN HELPER
+   ═══════════════════════════════════════════════════════ */
+function getMetaCsrf() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
+function updateMetaCsrf(newToken) {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta && newToken) meta.setAttribute('content', newToken);
+}
+
+/**
+ * Strip CSRF tokens from HTML before comparison.
+ * This prevents false-positive change detection every poll cycle
+ * because Laravel regenerates _token on each request.
+ */
+function normalizeHtmlForCompare(html) {
+    return html
+        .replace(/<input[^>]*name="_token"[^>]*>/g, '')
+        .replace(/<input[^>]*name="csrf-token"[^>]*>/g, '')
+        .trim();
+}
+
+/** After inserting new HTML, update all _token fields to the current meta CSRF */
+function syncCsrfTokens(container, token) {
+    if (!token) token = getMetaCsrf();
+    container.querySelectorAll('input[name="_token"]').forEach(input => {
+        input.value = token;
+    });
+}
+
+/* ═══════════════════════════════════════════════════════
    SPA NAVIGATION ENGINE
    ═══════════════════════════════════════════════════════ */
 const SiKunciSPA = {
@@ -263,13 +297,9 @@ const SiKunciSPA = {
         this.contentEl = document.getElementById('spa-content');
         if (!this.contentEl) return;
 
-        // Intercept link clicks
         document.addEventListener('click', (e) => this.handleClick(e));
-
-        // Intercept form submissions
         document.addEventListener('submit', (e) => this.handleFormSubmit(e));
 
-        // Handle browser back/forward
         window.addEventListener('popstate', (e) => {
             if (e.state && e.state.spaUrl) {
                 this.navigate(e.state.spaUrl, false);
@@ -278,12 +308,10 @@ const SiKunciSPA = {
             }
         });
 
-        // Set initial state
         history.replaceState({ spaUrl: window.location.href }, '', window.location.href);
     },
 
     shouldIntercept(el) {
-        // Don't intercept if:
         if (!el) return false;
         if (el.hasAttribute('data-no-spa')) return false;
         if (el.closest('[data-no-spa]')) return false;
@@ -295,14 +323,12 @@ const SiKunciSPA = {
         if (href.startsWith('#') || href.startsWith('javascript:')) return false;
         if (href.startsWith('mailto:') || href.startsWith('tel:')) return false;
 
-        // Only same-origin
         try {
             const url = new URL(href, window.location.origin);
             if (url.origin !== window.location.origin) return false;
         } catch { return false; }
 
-        // Don't intercept logout
-        if (href.includes('/logout')) return false;
+        if (href.includes('/logout') || href.includes('/login')) return false;
 
         return true;
     },
@@ -310,8 +336,6 @@ const SiKunciSPA = {
     handleClick(e) {
         const link = e.target.closest('a');
         if (!link || !this.shouldIntercept(link)) return;
-
-        // Don't intercept if modifier key pressed
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 
         e.preventDefault();
@@ -325,13 +349,14 @@ const SiKunciSPA = {
         if (!form || form.hasAttribute('data-no-spa')) return;
         if (form.closest('[data-no-spa]')) return;
 
-        // Don't intercept logout forms
         const action = form.getAttribute('action') || '';
-        if (action.includes('/logout')) return;
+        if (action.includes('/logout') || action.includes('/login')) return;
+
+        // Never intercept file uploads
+        if (form.enctype === 'multipart/form-data') return;
 
         const method = (form.querySelector('input[name="_method"]')?.value || form.method || 'GET').toUpperCase();
 
-        // For GET forms (filters, search), navigate
         if (method === 'GET') {
             e.preventDefault();
             const formData = new FormData(form);
@@ -342,7 +367,6 @@ const SiKunciSPA = {
             return;
         }
 
-        // For POST/PUT/DELETE forms, submit via AJAX
         e.preventDefault();
         this.submitForm(form, method);
     },
@@ -352,7 +376,6 @@ const SiKunciSPA = {
         this.isNavigating = true;
         this.showProgress();
 
-        // Disable submit button
         const submitBtn = form.querySelector('[type="submit"]');
         let originalBtnHtml = '';
         if (submitBtn) {
@@ -362,6 +385,10 @@ const SiKunciSPA = {
         }
 
         try {
+            // Ensure fresh CSRF token
+            const tokenInput = form.querySelector('input[name="_token"]');
+            if (tokenInput) tokenInput.value = getMetaCsrf();
+
             const formData = new FormData(form);
             const response = await fetch(form.action || window.location.href, {
                 method: 'POST',
@@ -374,25 +401,22 @@ const SiKunciSPA = {
                 redirect: 'follow',
             });
 
-            // Handle the response
             const html = await response.text();
 
             if (response.redirected) {
-                // Follow the redirect via SPA
                 this.processResponse(html, response.url, true);
             } else if (response.ok) {
                 this.processResponse(html, response.url || window.location.href, true);
+            } else if (response.status === 419) {
+                SiKunciToast.show('Sesi berubah, memuat ulang...', 'info');
+                setTimeout(() => window.location.reload(), 500);
             } else {
-                // On error, re-render content
                 this.processResponse(html, window.location.href, false);
             }
         } catch (error) {
-            console.error('SPA form submit error:', error);
-            // Fallback: submit normally
-            form.removeEventListener('submit', () => {});
+            console.error('SPA form error:', error);
             form.submit();
         } finally {
-            // Re-enable button
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnHtml;
@@ -417,17 +441,15 @@ const SiKunciSPA = {
                 credentials: 'same-origin',
             });
 
-            // If redirected to login, do full redirect
-            if (response.url.includes('/login')) {
+            if (response.url && response.url.includes('/login')) {
                 window.location.href = response.url;
                 return;
             }
 
             const html = await response.text();
             this.processResponse(html, response.url || url, pushState);
-
         } catch (error) {
-            console.error('SPA navigation error:', error);
+            console.error('SPA nav error:', error);
             window.location.href = url;
         } finally {
             this.isNavigating = false;
@@ -436,92 +458,75 @@ const SiKunciSPA = {
 
     processResponse(html, url, pushState) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-
-        // Extract content from #spa-content
         const newContent = doc.querySelector('#spa-content');
+
         if (!newContent) {
-            // Not a SPA-compatible page, do full navigation
             window.location.href = url;
             return;
         }
 
-        // Extract page title
+        // Sync CSRF from response
+        const newCsrfMeta = doc.querySelector('meta[name="csrf-token"]');
+        if (newCsrfMeta) updateMetaCsrf(newCsrfMeta.getAttribute('content'));
+
         const newTitle = doc.querySelector('.topbar-title');
         const pageTitle = doc.querySelector('title');
 
-        // Extract flash messages and show as toasts
-        const flashes = newContent.querySelectorAll('.flash-msg');
-        flashes.forEach(flash => {
+        // Flash messages → toasts
+        newContent.querySelectorAll('.flash-msg').forEach(flash => {
             const type = flash.dataset.flash || 'info';
             const msg = flash.textContent.trim();
             if (msg) SiKunciToast.show(msg, type);
             flash.remove();
         });
 
-        // Animate out
+        // Stop polling before DOM swap
+        SiKunciRealtime.stop();
+
         this.contentEl.classList.add('spa-loading');
 
         setTimeout(() => {
-            // Replace content
             this.contentEl.innerHTML = newContent.innerHTML;
+            syncCsrfTokens(this.contentEl);
 
-            // Update title
-            if (newTitle) {
-                document.getElementById('topbarTitle').textContent = newTitle.textContent;
-            }
-            if (pageTitle) {
-                document.title = pageTitle.textContent;
-            }
+            if (newTitle) document.getElementById('topbarTitle').textContent = newTitle.textContent;
+            if (pageTitle) document.title = pageTitle.textContent;
 
             // Update topbar back button
             const newTopbar = doc.querySelector('.topbar');
-            const currentTopbarBtns = document.querySelector('.topbar .d-flex');
-            const newTopbarBtns = newTopbar?.querySelector('.d-flex');
-            if (currentTopbarBtns && newTopbarBtns) {
-                currentTopbarBtns.innerHTML = newTopbarBtns.innerHTML;
-            }
+            const currentBtns = document.querySelector('.topbar .d-flex');
+            const newBtns = newTopbar?.querySelector('.d-flex');
+            if (currentBtns && newBtns) currentBtns.innerHTML = newBtns.innerHTML;
 
-            // Update sidebar active state
             this.updateSidebarActive(url);
 
-            // Update URL
-            if (pushState) {
-                history.pushState({ spaUrl: url }, '', url);
-            }
+            if (pushState) history.pushState({ spaUrl: url }, '', url);
             this.currentUrl = url;
 
-            // Execute inline scripts
             this.executeScripts(this.contentEl);
-
-            // Re-init Bootstrap components
             this.reinitBootstrap();
 
-            // Animate in
             requestAnimationFrame(() => {
                 this.contentEl.classList.remove('spa-loading');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
             this.hideProgress();
-
-            // Close mobile sidebar
             closeSidebar();
 
-            // Fire custom event
-            window.dispatchEvent(new CustomEvent('sikunci:page-loaded', { detail: { url } }));
+            // Restart realtime for new page
+            SiKunciRealtime.start();
 
-        }, 150); // Wait for fade-out
+            window.dispatchEvent(new CustomEvent('sikunci:page-loaded', { detail: { url } }));
+        }, 150);
     },
 
     updateSidebarActive(url) {
         const links = document.querySelectorAll('.sidebar .nav-link');
         const urlPath = new URL(url).pathname;
-
         links.forEach(link => {
             const linkPath = new URL(link.href).pathname;
             link.classList.remove('active');
-
-            // Exact match or prefix match
             if (linkPath === urlPath || (linkPath !== '/' && urlPath.startsWith(linkPath))) {
                 link.classList.add('active');
             }
@@ -529,8 +534,7 @@ const SiKunciSPA = {
     },
 
     executeScripts(container) {
-        const scripts = container.querySelectorAll('script');
-        scripts.forEach(oldScript => {
+        container.querySelectorAll('script').forEach(oldScript => {
             const newScript = document.createElement('script');
             if (oldScript.src) {
                 newScript.src = oldScript.src;
@@ -542,15 +546,8 @@ const SiKunciSPA = {
     },
 
     reinitBootstrap() {
-        // Re-init tooltips
         document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-            new bootstrap.Tooltip(el);
-        });
-        // Re-init modals
-        document.querySelectorAll('.modal').forEach(el => {
-            if (!bootstrap.Modal.getInstance(el)) {
-                new bootstrap.Modal(el);
-            }
+            if (!bootstrap.Tooltip.getInstance(el)) new bootstrap.Tooltip(el);
         });
     },
 
@@ -559,35 +556,72 @@ const SiKunciSPA = {
     },
     hideProgress() {
         this.progressBar.className = 'spa-progress-bar done';
-        setTimeout(() => {
-            this.progressBar.className = 'spa-progress-bar';
-        }, 600);
+        setTimeout(() => { this.progressBar.className = 'spa-progress-bar'; }, 600);
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => SiKunciSPA.init());
 
 /* ═══════════════════════════════════════════════════════
-   REALTIME POLLING (preserved from original)
+   REALTIME POLLING — Fixed (no false refreshes)
+
+   Bug fixed: Previously, every 4s poll detected the page
+   as "changed" because the CSRF _token value differs on
+   each server response. Now we strip _token before
+   comparing, so only REAL data changes trigger a DOM swap.
+   Timer is stored in a JS variable (not a DOM attribute)
+   so cleanup always works, even after SPA content swaps.
    ═══════════════════════════════════════════════════════ */
-function initRealtimePolling() {
-    const page = document.querySelector('[data-realtime-page]');
-    if (!page) return;
+const SiKunciRealtime = {
+    timerId: null,
+    inFlight: false,
+    _onVisibility: null,
+    _onRefreshNow: null,
 
-    const interval = Number(page.dataset.realtimeInterval || 5000);
-    let inFlight = false;
+    start() {
+        this.stop(); // always clean up first
 
-    function isUserInteracting() {
-        if (document.hidden || document.querySelector('.modal.show')) return true;
-        const active = document.activeElement;
-        if (!active || active === document.body) return false;
-        return ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)
-            && Boolean(active.closest('[data-realtime-page]'));
-    }
+        const page = document.querySelector('[data-realtime-page]');
+        if (!page) return;
 
-    async function refreshRealtimeRegions() {
-        if (inFlight || isUserInteracting()) return;
-        inFlight = true;
+        const interval = Number(page.dataset.realtimeInterval || 5000);
+        this.timerId = setInterval(() => this.poll(), interval);
+
+        // Poll when tab regains focus
+        this._onVisibility = () => { if (!document.hidden) this.poll(); };
+        document.addEventListener('visibilitychange', this._onVisibility);
+
+        // Manual refresh trigger
+        this._onRefreshNow = () => this.poll();
+        window.addEventListener('sikunci:refresh-now', this._onRefreshNow);
+    },
+
+    stop() {
+        if (this.timerId) { clearInterval(this.timerId); this.timerId = null; }
+        if (this._onVisibility) {
+            document.removeEventListener('visibilitychange', this._onVisibility);
+            this._onVisibility = null;
+        }
+        if (this._onRefreshNow) {
+            window.removeEventListener('sikunci:refresh-now', this._onRefreshNow);
+            this._onRefreshNow = null;
+        }
+    },
+
+    isUserInteracting() {
+        if (document.hidden) return true;
+        if (document.querySelector('.modal.show')) return true;
+        if (SiKunciSPA.isNavigating) return true;
+        const el = document.activeElement;
+        if (!el || el === document.body) return false;
+        return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
+    },
+
+    async poll() {
+        if (this.inFlight || this.isUserInteracting()) return;
+        if (!document.querySelector('[data-realtime-page]')) return;
+
+        this.inFlight = true;
         try {
             const response = await fetch(window.location.href, {
                 headers: {
@@ -598,51 +632,57 @@ function initRealtimePolling() {
                 credentials: 'same-origin',
                 cache: 'no-store',
             });
-            const contentType = response.headers.get('content-type') || '';
-            if (!response.ok || !contentType.includes('text/html')) return;
+
+            const ct = response.headers.get('content-type') || '';
+            if (!response.ok || !ct.includes('text/html')) return;
+
+            if (response.url && response.url.includes('/login')) {
+                this.stop();
+                window.location.href = response.url;
+                return;
+            }
+
             const html = await response.text();
             const doc = new DOMParser().parseFromString(html, 'text/html');
+
+            // Always sync CSRF from server
+            const meta = doc.querySelector('meta[name="csrf-token"]');
+            if (meta) updateMetaCsrf(meta.getAttribute('content'));
+
             const changedRegions = [];
+
             doc.querySelectorAll('[data-realtime-region]').forEach((incoming) => {
                 const key = incoming.dataset.realtimeRegion;
                 const current = document.querySelector(`[data-realtime-region="${key}"]`);
                 if (!current) return;
-                const currentHtml = current.innerHTML.trim();
-                const incomingHtml = incoming.innerHTML.trim();
-                if (currentHtml !== incomingHtml) {
-                    current.replaceWith(document.importNode(incoming, true));
+
+                // Compare AFTER stripping CSRF tokens — avoids false positives
+                const currentNorm = normalizeHtmlForCompare(current.innerHTML);
+                const incomingNorm = normalizeHtmlForCompare(incoming.innerHTML);
+
+                if (currentNorm !== incomingNorm) {
+                    // REAL content change — swap the region
+                    const newNode = document.importNode(incoming, true);
+                    syncCsrfTokens(newNode);
+                    current.replaceWith(newNode);
                     changedRegions.push(key);
+                } else {
+                    // No real change — just silently sync tokens
+                    syncCsrfTokens(current);
                 }
             });
+
             if (changedRegions.length > 0) {
                 window.dispatchEvent(new CustomEvent('sikunci:content-refreshed', {
                     detail: { regions: changedRegions },
                 }));
             }
-        } catch (error) { /* silent */ } finally { inFlight = false; }
+        } catch (e) { /* silent */ } finally { this.inFlight = false; }
     }
+};
 
-    window.addEventListener('sikunci:refresh-now', refreshRealtimeRegions);
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) refreshRealtimeRegions();
-    });
-    const timerId = setInterval(refreshRealtimeRegions, interval);
-
-    // Store timer ID so we can clear on SPA navigation
-    page.dataset.realtimeTimerId = timerId;
-}
-
-// Init realtime on load
-initRealtimePolling();
-
-// Re-init realtime after SPA navigation
-window.addEventListener('sikunci:page-loaded', () => {
-    // Clear old timers
-    document.querySelectorAll('[data-realtime-timer-id]').forEach(el => {
-        clearInterval(Number(el.dataset.realtimeTimerId));
-    });
-    initRealtimePolling();
-});
+// Init on first load
+document.addEventListener('DOMContentLoaded', () => SiKunciRealtime.start());
 </script>
 @stack('scripts')
 </body>
