@@ -26,6 +26,7 @@
     position: relative;
     background: #0F0F1A;
     aspect-ratio: 1 / 1;
+    max-height: 320px;
     overflow: hidden;
 }
 #video {
