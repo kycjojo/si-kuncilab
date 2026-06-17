@@ -523,15 +523,26 @@ const SiKunciSPA = {
     },
 
     updateSidebarActive(url) {
-        const links = document.querySelectorAll('.sidebar .nav-link');
+        const links = Array.from(document.querySelectorAll('.sidebar .nav-link'));
         const urlPath = new URL(url).pathname;
+        
+        links.forEach(link => link.classList.remove('active'));
+        
+        let bestMatch = null;
+        let bestLen = 0;
+        
         links.forEach(link => {
             const linkPath = new URL(link.href).pathname;
-            link.classList.remove('active');
-            if (linkPath === urlPath || (linkPath !== '/' && urlPath.startsWith(linkPath))) {
-                link.classList.add('active');
+            if (linkPath === urlPath) {
+                bestMatch = link;
+                bestLen = 9999;
+            } else if (linkPath !== '/' && urlPath.startsWith(linkPath) && linkPath.length > bestLen) {
+                bestMatch = link;
+                bestLen = linkPath.length;
             }
         });
+        
+        if (bestMatch) bestMatch.classList.add('active');
     },
 
     executeScripts(container) {
